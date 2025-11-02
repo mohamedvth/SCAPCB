@@ -3,43 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔒 Administration - M_A Fripe</title>
+    <title>🔒 Admin - Connexion M_A Fripe</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     
     <style>
+        /* CSS basé sur index.html pour la cohérence */
         :root {
             --primary-color: #3d994e; /* Vert forêt/nature */
-            --secondary-color: #fcf8f4; /* Couleur de fond clair */
-            --accent-color: #e57373; /* Rouge-corail */
+            --secondary-color: #fcf8f4; /* Couleur de fond clair (beige doux) */
+            --accent-color: #e57373; /* Rouge-corail pour l'accent (CTA) */
             --text-color: #333;
             --white-color: #fff;
+            --footer-bg: #2c3e50;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
             background-color: var(--secondary-color);
+            color: var(--text-color);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
+            text-align: center;
+            /* 🎨 AJOUT DU MOTIF CSS pour le fond */
+            background-image: repeating-linear-gradient(
+                -45deg,
+                rgba(255,255,255, 0.05),
+                rgba(255,255,255, 0.05) 10px,
+                rgba(0,0,0, 0.02) 10px,
+                rgba(0,0,0, 0.02) 20px
+            );
         }
 
         .login-container {
             background-color: var(--white-color);
             padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
             width: 100%;
             max-width: 400px;
-            text-align: center;
+            transition: transform 0.3s;
+        }
+        .login-container:hover {
+            transform: translateY(-5px);
         }
 
-        .login-container h2 {
+        .login-header {
+            margin-bottom: 30px;
+        }
+
+        .login-title {
             font-family: 'Playfair Display', serif;
             color: var(--primary-color);
-            margin-bottom: 30px;
             font-size: 2em;
+            margin-bottom: 10px;
         }
 
         .input-group {
@@ -51,42 +71,78 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: var(--text-color);
+            color: #555;
         }
 
         .input-group input {
             width: 100%;
             padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-sizing: border-box; 
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
             font-size: 1em;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
 
-        .login-btn {
+        .input-group input:focus {
+            border-color: var(--accent-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(229, 115, 115, 0.3);
+        }
+
+        .submit-btn {
             width: 100%;
-            padding: 12px;
+            padding: 15px;
             background-color: var(--accent-color);
             color: var(--white-color);
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 1.1em;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s ease, transform 0.1s;
+            text-transform: uppercase;
         }
 
-        .login-btn:hover {
+        .submit-btn:hover {
             background-color: #c05858;
+            transform: translateY(-1px);
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 25px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: #2a6f38;
+        }
+        
+        /* Message d'erreur (masqué par défaut) */
+        #error-message {
+            color: var(--accent-color);
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: none;
         }
     </style>
 </head>
 <body>
 
     <div class="login-container">
-        <h2>🔒 Connexion Administrateur</h2>
+        <div class="login-header">
+            <h1 class="login-title">🔐 Administration</h1>
+            <p>Veuillez entrer vos identifiants pour accéder au tableau de bord.</p>
+        </div>
+        
+        <div id="error-message">Nom d'utilisateur ou mot de passe incorrect.</div>
 
-        <form action="/admin/login" method="POST"> 
+        <!-- Le formulaire est un placeholder visuel. L'authentification réelle se ferait côté serveur. -->
+        <form id="loginForm">
             <div class="input-group">
                 <label for="username">Nom d'utilisateur</label>
                 <input type="text" id="username" name="username" required>
@@ -97,16 +153,32 @@
                 <input type="password" id="password" name="password" required>
             </div>
             
-            <button type="submit" class="login-btn">Se Connecter</button>
+            <button type="submit" class="submit-btn">Se connecter</button>
         </form>
-        
-        <p style="margin-top: 25px; font-size: 0.9em; color: gray;">
-            *INFO : Utilisez **admin** et **1234** pour tester la connexion (selon `server.js`).
-        </p>
-        <p style="font-size: 0.8em; color: gray;">
-             <a href="/" style="color: var(--primary-color);">← Retour à la Boutique</a>
-        </p>
+
+        <a href="index.html" class="back-link">← Retour à la Boutique</a>
     </div>
+    
+    <!-- Script JavaScript pour la simulation de validation (remplacez ceci par une vraie logique serveur) -->
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Empêche l'envoi du formulaire par défaut
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+
+            // Ceci est une SIMULATION pour le côté client
+            // En production, cette vérification serait faite sur le serveur !
+            if (username === 'admin' && password === '123456') {
+                // Succès: Rediriger vers un tableau de bord (ici, on revient à l'index pour la démo)
+                window.location.href = 'index.html?login=success'; 
+            } else {
+                // Échec: Afficher le message d'erreur
+                errorMessage.style.display = 'block';
+            }
+        });
+    </script>
 
 </body>
 </html>

@@ -1,10 +1,21 @@
-const config = {
-    user: 'admin',
-    password: '5513090807**Aa',
-    server: 'https://github.com/mohamedvth/scapcbmaintenancehamada.git',
-    database: 'SCAPCB_DB',
-    options: {
-        encrypt: true, // Pour les connexions Azure
-        trustServerCertificate: true // Pour les dev, désactive la vérification du certificat
-    }
-};
+{
+  "name": "ma-fripe-boutique",
+  "version": "1.0.0",
+  "description": "Serveur web pour la boutique M_A Fripe",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "fripe",
+    "ecommerce",
+    "node",
+    "express"
+  ],
+  "author": "Votre Nom/M_A Fripe",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
