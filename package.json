@@ -1,0 +1,19 @@
+{
+  "name": "ma-fripe-backend",
+  "version": "1.0.0",
+  "description": "Serveur backend pour M_A Fripe",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "fripe",
+    "ecommerce",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
