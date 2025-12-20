@@ -244,6 +244,69 @@
             box-shadow: 0 5px 15px rgba(46, 125, 50, 0.4);
         }
         
+        .edit-btn {
+            padding: 10px 20px;
+            background: linear-gradient(to right, #ff9800, #ffb74d);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid #ff9800;
+        }
+        
+        .edit-btn:hover {
+            background: linear-gradient(to right, #f57c00, #ff9800);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+        }
+        
+        .save-btn {
+            padding: 10px 20px;
+            background: linear-gradient(to right, #2196f3, #64b5f6);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid #2196f3;
+        }
+        
+        .save-btn:hover {
+            background: linear-gradient(to right, #1976d2, #2196f3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        }
+        
+        .cancel-btn {
+            padding: 10px 20px;
+            background: linear-gradient(to right, #f44336, #ef9a9a);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid #f44336;
+        }
+        
+        .cancel-btn:hover {
+            background: linear-gradient(to right, #d32f2f, #f44336);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+        
         .table-container {
             overflow-x: auto;
             margin-bottom: 30px;
@@ -457,7 +520,7 @@
                 width: 100%;
             }
             
-            .export-btn {
+            .export-btn, .edit-btn, .save-btn, .cancel-btn {
                 width: 100%;
                 justify-content: center;
             }
@@ -510,6 +573,56 @@
             color: #1565c0;
             font-weight: bold;
         }
+        
+        /* Styles pour l'édition */
+        .editable {
+            background-color: #ffffcc !important;
+            cursor: text;
+        }
+        
+        .editable:focus {
+            outline: 2px solid #2196f3;
+            background-color: #ffff99 !important;
+        }
+        
+        .edit-mode {
+            background-color: #e8f5e9;
+        }
+        
+        .edit-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(to right, #ff9800, #ffb74d);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            display: none;
+            font-weight: bold;
+            border: 2px solid #ff9800;
+        }
+        
+        .save-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(to right, #4caf50, #81c784);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            display: none;
+            font-weight: bold;
+            border: 2px solid #4caf50;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -524,6 +637,10 @@
             <div class="error-message" id="errorMessage">Nom d'utilisateur ou mot de passe incorrect</div>
         </div>
     </div>
+
+    <!-- Notifications -->
+    <div class="edit-notification" id="editNotification">Mode Édition Activé - Cliquez sur les cellules pour modifier</div>
+    <div class="save-notification" id="saveNotification">Modifications enregistrées avec succès!</div>
 
     <!-- Main Content (Hidden until login) -->
     <div id="mainContent" style="display: none;">
@@ -584,7 +701,13 @@
             </div>
             
             <input type="text" class="search-box" id="searchInput" placeholder="Recherche par date (AAAA-MM-JJ)" onkeyup="searchTable()">
-            <button class="export-btn" onclick="exportToExcel()">📊 Exporter Excel</button>
+            
+            <div class="button-group">
+                <button class="export-btn" onclick="exportToExcel()">📊 Exporter Excel</button>
+                <button class="edit-btn" onclick="enableEditMode()">✏️ Éditer Tableau</button>
+                <button class="save-btn" id="saveBtn" onclick="saveChanges()" style="display: none;">💾 Enregistrer</button>
+                <button class="cancel-btn" id="cancelBtn" onclick="cancelEditMode()" style="display: none;">❌ Annuler</button>
+            </div>
         </div>
         
         <div class="table-container">
@@ -1039,6 +1162,8 @@
         let currentData = data2025;
         let currentYear = 2025;
         let currentFilter = 'all';
+        let isEditMode = false;
+        let originalData = null;
         
         // Function to format date
         function formatDate(dateStr) {
@@ -1126,6 +1251,11 @@
             
             // Update statistics
             updateStatistics(data, year);
+            
+            // If in edit mode, make cells editable
+            if (isEditMode) {
+                enableEditMode();
+            }
         }
         
         // Function to update statistics
@@ -1149,6 +1279,14 @@
         
         // Function to show specific sheet
         function showSheet(year) {
+            // Cancel edit mode if active
+            if (isEditMode) {
+                if (!confirm("Les modifications non enregistrées seront perdues. Voulez-vous continuer ?")) {
+                    return;
+                }
+                cancelEditMode();
+            }
+            
             // Update active button
             document.querySelectorAll('.sheet-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -1168,6 +1306,14 @@
         
         // Function to filter by month
         function filterByMonth(month) {
+            // Cancel edit mode if active
+            if (isEditMode) {
+                if (!confirm("Les modifications non enregistrées seront perdues. Voulez-vous continuer ?")) {
+                    return;
+                }
+                cancelEditMode();
+            }
+            
             // Update active month button
             document.querySelectorAll('.month-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -1196,8 +1342,138 @@
             });
         }
         
+        // Function to enable edit mode
+        function enableEditMode() {
+            if (isEditMode) return;
+            
+            isEditMode = true;
+            
+            // Save original data
+            originalData = JSON.parse(JSON.stringify(currentData));
+            
+            // Make all data cells editable except date, total and empty columns
+            const cells = document.querySelectorAll('#tableBody td');
+            cells.forEach((cell, index) => {
+                // Don't make date column (0), total column (8), or last two columns editable
+                const cellIndex = index % 11;
+                if (cellIndex !== 0 && cellIndex !== 8 && cellIndex !== 9 && cellIndex !== 10) {
+                    cell.classList.add('editable');
+                    cell.setAttribute('contenteditable', 'true');
+                    
+                    // Add input event to update background
+                    cell.addEventListener('input', function() {
+                        this.style.backgroundColor = '#ffff99';
+                    });
+                }
+            });
+            
+            // Show notification
+            document.getElementById('editNotification').style.display = 'block';
+            
+            // Show save and cancel buttons, hide edit button
+            document.getElementById('saveBtn').style.display = 'flex';
+            document.getElementById('cancelBtn').style.display = 'flex';
+            document.querySelector('.edit-btn').style.display = 'none';
+            
+            // Change table container style
+            document.querySelector('.table-container').classList.add('edit-mode');
+            
+            // Hide notification after 5 seconds
+            setTimeout(() => {
+                document.getElementById('editNotification').style.display = 'none';
+            }, 5000);
+        }
+        
+        // Function to save changes
+        function saveChanges() {
+            if (!isEditMode) return;
+            
+            // Get all rows from table
+            const rows = document.querySelectorAll('#tableBody tr');
+            
+            // For each row, update the data in currentData
+            rows.forEach((row, rowIndex) => {
+                const cells = row.querySelectorAll('td');
+                const dateCell = cells[0].textContent;
+                
+                // Convert formatted date back to YYYY-MM-DD
+                const date = new Date(dateCell);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const dateStr = `${year}-${month}-${day}`;
+                
+                // Find the index of this date in currentData
+                const dataIndex = currentData.findIndex(item => item[0] === dateStr);
+                
+                if (dataIndex !== -1) {
+                    // Update each cell value
+                    cells.forEach((cell, cellIndex) => {
+                        if (cellIndex !== 0 && cellIndex !== 8 && cellIndex !== 9 && cellIndex !== 10) {
+                            currentData[dataIndex][cellIndex] = cell.textContent;
+                        }
+                    });
+                }
+            });
+            
+            // Exit edit mode
+            cancelEditMode();
+            
+            // Show save notification
+            document.getElementById('saveNotification').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('saveNotification').style.display = 'none';
+            }, 3000);
+            
+            // Update statistics
+            updateStatistics(currentData, currentYear);
+        }
+        
+        // Function to cancel edit mode
+        function cancelEditMode() {
+            if (!isEditMode) return;
+            
+            isEditMode = false;
+            
+            // Restore original data
+            if (originalData) {
+                currentData = JSON.parse(JSON.stringify(originalData));
+                originalData = null;
+            }
+            
+            // Remove editable attributes
+            const cells = document.querySelectorAll('#tableBody td');
+            cells.forEach(cell => {
+                cell.classList.remove('editable');
+                cell.removeAttribute('contenteditable');
+                cell.style.backgroundColor = '';
+            });
+            
+            // Hide notification
+            document.getElementById('editNotification').style.display = 'none';
+            
+            // Show edit button, hide save and cancel buttons
+            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('cancelBtn').style.display = 'none';
+            document.querySelector('.edit-btn').style.display = 'flex';
+            
+            // Change table container style back
+            document.querySelector('.table-container').classList.remove('edit-mode');
+            
+            // Re-populate table with original data
+            populateTable(currentData, currentYear, currentFilter);
+        }
+        
         // Function to export table to Excel
         function exportToExcel() {
+            // Cancel edit mode if active
+            if (isEditMode) {
+                if (!confirm("Les modifications non enregistrées seront perdues. Voulez-vous continuer ?")) {
+                    return;
+                }
+                cancelEditMode();
+            }
+            
             // Get table data
             const table = document.getElementById('dataTable');
             const rows = table.querySelectorAll('tr');
