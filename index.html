@@ -223,6 +223,27 @@
             background-color: #f8f9fa;
         }
         
+        .export-btn {
+            padding: 10px 20px;
+            background: linear-gradient(to right, #2e7d32, #4caf50);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid #2e7d32;
+        }
+        
+        .export-btn:hover {
+            background: linear-gradient(to right, #1b5e20, #2e7d32);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 125, 50, 0.4);
+        }
+        
         .table-container {
             overflow-x: auto;
             margin-bottom: 30px;
@@ -436,6 +457,11 @@
                 width: 100%;
             }
             
+            .export-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
             th, td {
                 padding: 8px 5px;
                 font-size: 12px;
@@ -558,6 +584,7 @@
             </div>
             
             <input type="text" class="search-box" id="searchInput" placeholder="Recherche par date (AAAA-MM-JJ)" onkeyup="searchTable()">
+            <button class="export-btn" onclick="exportToExcel()">📊 Exporter Excel</button>
         </div>
         
         <div class="table-container">
@@ -1167,6 +1194,98 @@
                     }
                 }
             });
+        }
+        
+        // Function to export table to Excel
+        function exportToExcel() {
+            // Get table data
+            const table = document.getElementById('dataTable');
+            const rows = table.querySelectorAll('tr');
+            
+            // Create CSV content
+            let csvContent = "";
+            
+            // Add headers
+            const headers = [];
+            const headerRow1 = rows[0];
+            const headerRow2 = rows[1];
+            
+            // Process first header row
+            const headerCells1 = headerRow1.querySelectorAll('th');
+            const headerCells2 = headerRow2.querySelectorAll('th');
+            
+            // Special handling for merged headers
+            let colIndex = 0;
+            headerCells1.forEach((cell, index) => {
+                const rowspan = parseInt(cell.getAttribute('rowspan') || '1');
+                const colspan = parseInt(cell.getAttribute('colspan') || '1');
+                
+                if (rowspan === 2) {
+                    // This cell spans both rows
+                    for (let i = 0; i < colspan; i++) {
+                        headers[colIndex + i] = cell.textContent.trim();
+                    }
+                    colIndex += colspan;
+                } else if (colspan > 1) {
+                    // This cell spans multiple columns in first row
+                    // Second row will have the detailed headers
+                    for (let i = 0; i < colspan; i++) {
+                        const detailCell = headerCells2[i];
+                        headers[colIndex + i] = cell.textContent.trim() + " " + detailCell.textContent.trim();
+                    }
+                    colIndex += colspan;
+                } else {
+                    headers[colIndex] = cell.textContent.trim();
+                    colIndex++;
+                }
+            });
+            
+            // Add header row to CSV
+            csvContent += headers.join(',') + '\n';
+            
+            // Add data rows
+            for (let i = 2; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.querySelectorAll('td');
+                const rowData = [];
+                
+                cells.forEach(cell => {
+                    let cellText = cell.textContent.trim();
+                    // Handle special characters in CSV
+                    if (cellText.includes(',') || cellText.includes('"') || cellText.includes('\n')) {
+                        cellText = '"' + cellText.replace(/"/g, '""') + '"';
+                    }
+                    rowData.push(cellText);
+                });
+                
+                csvContent += rowData.join(',') + '\n';
+            }
+            
+            // Create blob and download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            // Create filename based on current view
+            let filename = `Sosete_Forages_${currentYear}`;
+            if (currentFilter !== 'all') {
+                const monthNames = {
+                    '01': 'Janvier', '02': 'Février', '03': 'Mars', '04': 'Avril',
+                    '05': 'Mai', '06': 'Juin', '07': 'Juillet', '08': 'Août',
+                    '09': 'Septembre', '10': 'Octobre', '11': 'Novembre', '12': 'Décembre'
+                };
+                filename += `_${monthNames[currentFilter]}`;
+            }
+            filename += `_${new Date().toISOString().slice(0,10)}.csv`;
+            
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Show notification
+            alert(`Données exportées avec succès!\nFichier: ${filename}`);
         }
         
         // Initialize with 2025 data
