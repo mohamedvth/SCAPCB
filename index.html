@@ -1,3 +1,5 @@
+[file name]: index.html
+[file content begin]
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -515,6 +517,49 @@
         .export-btn:hover {
             background-color: #e9ecef;
         }
+        
+        /* Ajout pour la gestion des erreurs de login */
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        /* Ajout pour les notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .notification.success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .notification.error {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -539,9 +584,9 @@
             </form>
             
             <div style="margin-top: 30px; font-size: 0.8rem; color: #7f8c8d;">
-                <p><strong>Identifiants de démo:</strong></p>
-                <p>Utilisateur: admin</p>
-                <p>Mot de passe: admin</p>
+                <p><strong>Pour accéder au système :</strong></p>
+                <p>Contactez l'administrateur système</p>
+                <p>ou utilisez vos identifiants d'entreprise</p>
             </div>
         </div>
     </div>
@@ -727,7 +772,7 @@
             </div>
             
             <footer>
-                <p class="copyright">Socité Le Phare de Cap Bon - Système de gestion des absences &copy; hamada 2025</p>
+                <p class="copyright">Socité Le Phare de Cap Bon - Système de gestion des absences &copy; 2025</p>
                 <p>Tous droits réservés | Version 1.0</p>
                 <div class="firebase-status">
                     <div class="dot" id="firebaseStatusDot"></div>
@@ -743,7 +788,7 @@
         // ============================
         const VALID_CREDENTIALS = {
             username: 'admin',
-            password: 'admin'
+            password: 'admin123'
         };
 
         // ============================
@@ -765,6 +810,7 @@
                 const username = document.getElementById('username').value;
                 const password = document.getElementById('password').value;
                 const loginError = document.getElementById('loginError');
+                const loginBox = document.querySelector('.login-box');
                 
                 // Validation des identifiants
                 if (username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password) {
@@ -782,11 +828,13 @@
                     // Animation d'erreur
                     document.getElementById('username').style.borderColor = '#e74c3c';
                     document.getElementById('password').style.borderColor = '#e74c3c';
+                    loginBox.classList.add('shake');
                     
                     setTimeout(() => {
                         document.getElementById('username').style.borderColor = '#ddd';
                         document.getElementById('password').style.borderColor = '#ddd';
-                    }, 2000);
+                        loginBox.classList.remove('shake');
+                    }, 500);
                 }
             });
             
@@ -850,7 +898,7 @@
         }
         
         // ============================
-        // DONNÉES DE DÉMO AVEC MATRICULES
+        // DONNÉES DE DÉMO
         // ============================
         const demoData = {
             employees: [
@@ -860,7 +908,7 @@
                 { id: 4, matricule: "PH-2023-004", name: "Pierre Leroy", department: "Logistique", absences: 1 },
                 { id: 5, matricule: "PH-2023-005", name: "Julie Petit", department: "Ressources Humaines", absences: 4 },
                 { id: 6, matricule: "PH-2023-006", name: "Thomas Moreau", department: "Informatique", absences: 2 },
-                { id: 7, matricule: "PH-2023-007", name: "Mohamed Hamada", department: "Direction", absences: 0 },
+                { id: 7, matricule: "PH-2023-007", name: "Hatem Jedidi", department: "Direction", absences: 0 },
                 { id: 8, matricule: "PH-2023-008", name: "Fatima Zohra", department: "Production", absences: 3 }
             ],
             monthlyData: [
@@ -1054,6 +1102,12 @@
             const absenceDays = parseFloat(document.getElementById('absenceDays').value);
             const absenceReason = document.getElementById('absenceReason').value;
             
+            // Validation des données
+            if (!employeeMatricule || !employeeName || !employeeDepartment || !absenceDate || !absenceDays || !absenceReason) {
+                showNotification("Veuillez remplir tous les champs obligatoires", 'error');
+                return;
+            }
+            
             // Simulation d'ajout
             console.log("Ajout d'absence - Le Phare de Cap Bon:", {
                 employeeMatricule,
@@ -1064,15 +1118,27 @@
                 absenceReason
             });
             
-            const newEmployee = {
-                id: demoData.employees.length + 1,
-                matricule: employeeMatricule || `PH-${new Date().getFullYear()}-${String(demoData.employees.length + 1).padStart(3, '0')}`,
-                name: employeeName,
-                department: employeeDepartment,
-                absences: absenceDays
-            };
+            // Vérifier si l'employé existe déjà
+            const existingEmployee = demoData.employees.find(emp => 
+                emp.matricule === employeeMatricule || 
+                emp.name.toLowerCase() === employeeName.toLowerCase()
+            );
             
-            demoData.employees.push(newEmployee);
+            if (existingEmployee) {
+                // Mettre à jour l'absence existante
+                existingEmployee.absences += absenceDays;
+            } else {
+                // Ajouter un nouvel employé
+                const newEmployee = {
+                    id: demoData.employees.length + 1,
+                    matricule: employeeMatricule,
+                    name: employeeName,
+                    department: employeeDepartment,
+                    absences: absenceDays
+                };
+                
+                demoData.employees.push(newEmployee);
+            }
             
             // Mettre à jour les données mensuelles
             const currentMonth = new Date().getMonth();
@@ -1090,24 +1156,13 @@
             closeAddAbsenceModal();
             
             // Notification
-            showNotification(`Absence de ${employeeName} (${newEmployee.matricule}) enregistrée avec succès!`, 'success');
+            showNotification(`Absence de ${employeeName} (${employeeMatricule}) enregistrée avec succès!`, 'success');
         }
         
-        function showNotification(message, type = 'info') {
+        function showNotification(message, type = 'success') {
             // Créer une notification temporaire
             const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 15px 25px;
-                background: ${type === 'success' ? '#27ae60' : '#3498db'};
-                color: white;
-                border-radius: var(--border-radius);
-                box-shadow: var(--shadow);
-                z-index: 9999;
-                animation: slideIn 0.3s ease;
-            `;
+            notification.className = `notification ${type}`;
             notification.textContent = message;
             document.body.appendChild(notification);
             
@@ -1204,3 +1259,4 @@
     </script>
 </body>
 </html>
+[file content end]
