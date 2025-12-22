@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sosete Le Phare de Cap Bon - Water Well Readings 2025-2026</title>
+    <title>Maintenance Management - Cloud Storage</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -13,1561 +18,1436 @@
         }
         
         body {
-            background: linear-gradient(135deg, #0a2463 0%, #1e3c72 50%, #0a2463 100%);
+            background-color: #f5f7fa;
             color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
-            max-width: 100%;
-            overflow-x: auto;
-            min-height: 100vh;
         }
         
-        .login-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #0a2463 0%, #1e3c72 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        
-        .login-box {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            width: 350px;
-            text-align: center;
-            border: 3px solid #e63946;
-        }
-        
-        .login-box h2 {
-            color: #0a2463;
+        header {
+            background: linear-gradient(135deg, #2c3e50, #1a2530);
+            color: white;
+            padding: 25px 0;
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             margin-bottom: 30px;
-            font-size: 24px;
         }
         
-        .login-logo {
-            color: #e63946;
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-        }
-        
-        .login-box input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 2px solid #0a2463;
-            border-radius: 5px;
-            font-size: 16px;
-            background-color: #f8f9fa;
-        }
-        
-        .login-box button {
-            background: linear-gradient(to right, #e63946, #ff6b6b);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            width: 100%;
-            margin-top: 10px;
-            transition: all 0.3s;
-            font-weight: bold;
-        }
-        
-        .login-box button:hover {
-            background: linear-gradient(to right, #d62828, #e63946);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(230, 57, 70, 0.4);
-        }
-        
-        .error-message {
-            color: #e63946;
-            margin-top: 10px;
-            display: none;
-            font-weight: bold;
-        }
-        
-        .company-header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 25px;
-            background: linear-gradient(135deg, #e63946 0%, #ff6b6b 50%, #e63946 100%);
-            color: white;
-            border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(230, 57, 70, 0.3);
-            border: 3px solid white;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .company-header::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 5px;
-            background: linear-gradient(to right, #0a2463, #1e3c72, #0a2463);
-        }
-        
-        .company-header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            color: white;
-        }
-        
-        .company-header .company-name {
-            font-size: 36px;
-            font-weight: bold;
-            color: #0a2463;
-            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
-            margin-bottom: 15px;
-            letter-spacing: 1px;
-        }
-        
-        .company-header h2 {
-            font-size: 24px;
-            font-weight: normal;
-            margin-bottom: 5px;
-            color: white;
-        }
-        
-        .company-header p {
-            font-size: 16px;
-            opacity: 0.9;
-            margin-top: 10px;
-        }
-        
-        .controls {
+        .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 10px;
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border: 2px solid #e63946;
+            padding: 0 20px;
         }
         
-        .sheet-selector {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .sheet-btn {
-            padding: 10px 20px;
-            background: linear-gradient(to right, #0a2463, #1e3c72);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-            border: 2px solid #0a2463;
-        }
-        
-        .sheet-btn:hover {
-            background: linear-gradient(to right, #1e3c72, #0a2463);
-            transform: translateY(-2px);
-        }
-        
-        .sheet-btn.active {
-            background: linear-gradient(to right, #e63946, #ff6b6b);
-            border: 2px solid #e63946;
-            box-shadow: 0 4px 8px rgba(230, 57, 70, 0.3);
-        }
-        
-        .month-filter {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-        
-        .month-btn {
-            padding: 8px 12px;
-            background: #0a2463;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        
-        .month-btn:hover {
-            background: #e63946;
-        }
-        
-        .month-btn.active {
-            background: linear-gradient(to right, #e63946, #ff6b6b);
-            font-weight: bold;
-        }
-        
-        .search-box {
-            padding: 8px 12px;
-            border: 2px solid #0a2463;
-            border-radius: 5px;
-            width: 200px;
-            background-color: #f8f9fa;
-        }
-        
-        .export-btn {
-            padding: 10px 20px;
-            background: linear-gradient(to right, #2e7d32, #4caf50);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: 2px solid #2e7d32;
-        }
-        
-        .export-btn:hover {
-            background: linear-gradient(to right, #1b5e20, #2e7d32);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(46, 125, 50, 0.4);
-        }
-        
-        .edit-btn {
-            padding: 10px 20px;
-            background: linear-gradient(to right, #ff9800, #ffb74d);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: 2px solid #ff9800;
-        }
-        
-        .edit-btn:hover {
-            background: linear-gradient(to right, #f57c00, #ff9800);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
-        }
-        
-        .save-btn {
-            padding: 10px 20px;
-            background: linear-gradient(to right, #2196f3, #64b5f6);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: 2px solid #2196f3;
-        }
-        
-        .save-btn:hover {
-            background: linear-gradient(to right, #1976d2, #2196f3);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
-        }
-        
-        .cancel-btn {
-            padding: 10px 20px;
-            background: linear-gradient(to right, #f44336, #ef9a9a);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: 2px solid #f44336;
-        }
-        
-        .cancel-btn:hover {
-            background: linear-gradient(to right, #d32f2f, #f44336);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
-        }
-        
-        .table-container {
-            overflow-x: auto;
-            margin-bottom: 30px;
-            border-radius: 10px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            background-color: white;
-            max-height: 600px;
-            overflow-y: auto;
-            border: 3px solid #e63946;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 1300px;
-        }
-        
-        th {
-            background: linear-gradient(to bottom, #0a2463, #1e3c72);
-            color: white;
-            padding: 12px 8px;
-            text-align: center;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            border-right: 2px solid white;
-        }
-        
-        th:last-child {
-            border-right: none;
-        }
-        
-        td {
-            padding: 10px 8px;
-            text-align: center;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        
-        tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-        
-        tr:hover {
-            background-color: #e8f4fc;
-        }
-        
-        .date-col {
-            font-weight: bold;
-            color: #0a2463;
-            background: linear-gradient(to right, #f8f9fa, #e8f4fc);
-            position: sticky;
-            left: 0;
-            z-index: 5;
-            border-right: 2px solid #e63946;
-        }
-        
-        .time-col {
-            background: linear-gradient(to right, #f8f9fa, #e8f4fc);
-            position: sticky;
-            left: 120px;
-            z-index: 5;
-            border-right: 2px solid #e63946;
-        }
-        
-        .empty-cell {
-            background-color: #f9f9f9;
-        }
-        
-        .forage-1 {
-            background-color: #e8f4fc;
-        }
-        
-        .forage-2 {
-            background-color: #ffeaea;
-        }
-        
-        .forage-3 {
-            background-color: #f0f0ff;
-        }
-        
-        .total-col {
-            background: linear-gradient(to right, #e8f4fc, #ffeaea);
-            font-weight: bold;
-            position: sticky;
-            right: 80px;
-            z-index: 5;
-            border-left: 2px solid #e63946;
-            color: #0a2463;
-        }
-        
-        .footer {
-            text-align: center;
-            padding: 25px;
-            margin-top: 30px;
-            border-top: 3px solid #e63946;
-            color: white;
-            font-size: 14px;
-            background: linear-gradient(135deg, #0a2463 0%, #1e3c72 100%);
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .copyright {
-            font-weight: bold;
-            color: #ff6b6b;
-            margin-top: 10px;
-            font-size: 16px;
-        }
-        
-        .company-footer {
-            font-size: 20px;
-            font-weight: bold;
-            color: white;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .stats {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border: 2px solid #0a2463;
-        }
-        
-        .stats h3 {
-            color: #0a2463;
-            margin-bottom: 10px;
-            border-bottom: 2px solid #e63946;
-            padding-bottom: 5px;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, #f8f9fa, #e8f4fc);
-            padding: 15px;
-            border-radius: 5px;
-            border-left: 4px solid #e63946;
-            border-top: 2px solid #0a2463;
-        }
-        
-        .stat-card h4 {
-            color: #0a2463;
+        h1 {
+            font-size: 2.5rem;
             margin-bottom: 5px;
         }
         
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #e63946;
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
         }
         
-        .logo-container {
+        .user-info {
             display: flex;
-            justify-content: center;
             align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .auth-section {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .auth-form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .auth-form h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .auth-tab.active {
+            border-bottom-color: #3498db;
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            padding: 14px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .main-content {
+            display: none;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+        
+        .form-section {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            height: fit-content;
+        }
+        
+        .form-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .priority-options {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .priority-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .priority-btn.active {
+            font-weight: bold;
+        }
+        
+        .priority-btn.low.active {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .priority-btn.medium.active {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        
+        .priority-btn.high.active {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .tasks-section {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .tasks-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-btn.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .tasks-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .task-item {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 5px solid #ddd;
+            background-color: #f8f9fa;
+            transition: all 0.3s;
+        }
+        
+        .task-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .task-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .task-priority {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .priority-low {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .priority-medium {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .priority-high {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .task-description {
+            margin-bottom: 15px;
+            color: #555;
+        }
+        
+        .task-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            border: 1px solid #ddd;
+            background-color: white;
+        }
+        
+        .action-btn.complete {
+            color: #28a745;
+            border-color: #28a745;
+        }
+        
+        .action-btn.complete:hover {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .action-btn.edit {
+            color: #007bff;
+            border-color: #007bff;
+        }
+        
+        .action-btn.edit:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .action-btn.delete {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .action-btn.delete:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            color: #ddd;
             margin-bottom: 15px;
         }
         
-        .logo {
-            font-size: 48px;
+        .completed-task {
+            opacity: 0.8;
+            border-left-color: #28a745;
+        }
+        
+        .completed-task .task-title {
+            text-decoration: line-through;
+        }
+        
+        .created-by {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .storage-info {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #666;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border: 1px dashed #ddd;
+        }
+        
+        .alert {
+            padding: 12px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .stats-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-box {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
             font-weight: bold;
-            background: linear-gradient(to right, #0a2463, #e63946);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
+            margin-bottom: 5px;
         }
         
-        .lighthouse-icon {
-            color: #e63946;
-            margin-right: 10px;
-            font-size: 36px;
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
         }
         
-        .water-drop {
-            color: #0a2463;
-            margin-left: 10px;
-            font-size: 36px;
+        @media (max-width: 992px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
         }
         
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            
-            .company-header h1 {
-                font-size: 24px;
-            }
-            
-            .company-header .company-name {
-                font-size: 28px;
-            }
-            
-            .company-header h2 {
-                font-size: 18px;
-            }
-            
-            .controls {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .search-box {
-                width: 100%;
-            }
-            
-            .export-btn, .edit-btn, .save-btn, .cancel-btn {
-                width: 100%;
+            .filters {
                 justify-content: center;
             }
             
-            th, td {
-                padding: 8px 5px;
-                font-size: 12px;
+            .task-footer {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
             }
             
-            .logo {
-                font-size: 36px;
+            .task-actions {
+                width: 100%;
+                justify-content: flex-end;
             }
-        }
-        
-        /* Red and Blue theme elements */
-        .red-text {
-            color: #e63946;
-            font-weight: bold;
-        }
-        
-        .blue-text {
-            color: #0a2463;
-            font-weight: bold;
-        }
-        
-        .red-bg {
-            background-color: #ffeaea;
-        }
-        
-        .blue-bg {
-            background-color: #e8f4fc;
-        }
-        
-        .red-border {
-            border-color: #e63946;
-        }
-        
-        .blue-border {
-            border-color: #0a2463;
-        }
-        
-        .highlight-red {
-            background-color: #ffebee;
-            color: #d32f2f;
-            font-weight: bold;
-        }
-        
-        .highlight-blue {
-            background-color: #e3f2fd;
-            color: #1565c0;
-            font-weight: bold;
-        }
-        
-        /* Styles pour l'édition */
-        .editable {
-            background-color: #ffffcc !important;
-            cursor: text;
-        }
-        
-        .editable:focus {
-            outline: 2px solid #2196f3;
-            background-color: #ffff99 !important;
-        }
-        
-        .edit-mode {
-            background-color: #e8f5e9;
-        }
-        
-        .edit-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(to right, #ff9800, #ffb74d);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 5px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            z-index: 1001;
-            display: none;
-            font-weight: bold;
-            border: 2px solid #ff9800;
-        }
-        
-        .save-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(to right, #4caf50, #81c784);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 5px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            z-index: 1001;
-            display: none;
-            font-weight: bold;
-            border: 2px solid #4caf50;
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 10px;
+            
+            .stats-container {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Login Overlay -->
-    <div class="login-container" id="loginContainer">
-        <div class="login-box">
-            <div class="login-logo">SOSETE LE PHARE DE CAP BON</div>
-            <h2>Systeme de Surveillance des Forages</h2>
-            <input type="text" id="username" placeholder="Nom d'utilisateur" autocomplete="off">
-            <input type="password" id="password" placeholder="Mot de passe" autocomplete="off">
-            <button onclick="login()">Connexion</button>
-            <div class="error-message" id="errorMessage">Nom d'utilisateur ou mot de passe incorrect</div>
-        </div>
-    </div>
-
-    <!-- Notifications -->
-    <div class="edit-notification" id="editNotification">Mode Édition Activé - Cliquez sur les cellules pour modifier</div>
-    <div class="save-notification" id="saveNotification">Modifications enregistrées avec succès!</div>
-
-    <!-- Main Content (Hidden until login) -->
-    <div id="mainContent" style="display: none;">
-        <div class="company-header">
-            <div class="logo-container">
-                <div class="lighthouse-icon">🏗️</div>
-                <div class="logo">SOSETE</div>
-                <div class="water-drop">💧</div>
-            </div>
-            <div class="company-name">LE PHARE DE CAP BON</div>
-            <h1>SYSTEME DE SURVEILLANCE DES FORAGES</h1>
-            <h2 id="yearTitle">2025 - Données Complètes Quotidiennes</h2>
-            <p>Suivi des Consommations d'Eau - Trois Forages</p>
-        </div>
-        
-        <div class="stats" id="statsPanel">
-            <h3>Statistiques Annuelles 2025</h3>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h4>Total Jours Enregistrés</h4>
-                    <div class="stat-value" id="totalDays">364</div>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1><i class="fas fa-tools"></i> Maintenance Management</h1>
+                    <p class="subtitle">Public cloud storage with real-time updates</p>
                 </div>
-                <div class="stat-card">
-                    <h4>Forage N°1 Total</h4>
-                    <div class="stat-value" id="totalForage1">17,036</div>
-                </div>
-                <div class="stat-card">
-                    <h4>Forage N°2 Total</h4>
-                    <div class="stat-value" id="totalForage2">136,151</div>
-                </div>
-                <div class="stat-card">
-                    <h4>Forage N°3 Total</h4>
-                    <div class="stat-value" id="totalForage3">107,781</div>
+                <div class="user-info" id="user-info" style="display: none;">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <div>
+                        <div id="user-name">User</div>
+                        <button class="btn btn-secondary" id="logout-btn" style="padding: 5px 10px; font-size: 0.8rem;">Logout</button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </header>
         
-        <div class="controls">
-            <div class="sheet-selector">
-                <button class="sheet-btn active" onclick="showSheet(2025)">📊 2025 Données Complètes</button>
-                <button class="sheet-btn" onclick="showSheet(2026)">📋 2026 Modèle</button>
+        <!-- Authentication Section -->
+        <section class="auth-section" id="auth-section">
+            <div class="auth-form">
+                <h2>Maintenance Cloud System</h2>
+                <div class="auth-tabs">
+                    <div class="auth-tab active" id="login-tab">Login</div>
+                    <div class="auth-tab" id="register-tab">Register</div>
+                </div>
+                
+                <div id="login-form">
+                    <input type="email" id="login-email" class="auth-input" placeholder="Email" required>
+                    <input type="password" id="login-password" class="auth-input" placeholder="Password" required>
+                    <button class="btn btn-primary" id="login-btn">Login</button>
+                </div>
+                
+                <div id="register-form" style="display: none;">
+                    <input type="text" id="register-name" class="auth-input" placeholder="Full Name" required>
+                    <input type="email" id="register-email" class="auth-input" placeholder="Email" required>
+                    <input type="password" id="register-password" class="auth-input" placeholder="Password (min. 6 characters)" required>
+                    <button class="btn btn-success" id="register-btn">Create Account</button>
+                </div>
+                
+                <div class="storage-info">
+                    <i class="fas fa-cloud"></i> Data is stored in the cloud and accessible from any device
+                </div>
+            </div>
+        </section>
+        
+        <!-- Main Content (shown after login) -->
+        <div class="main-content" id="main-content">
+            <!-- Alert messages -->
+            <div class="alert alert-success" id="success-alert">
+                <i class="fas fa-check-circle"></i> <span id="success-message"></span>
             </div>
             
-            <div class="month-filter" id="monthFilter">
-                <button class="month-btn active" onclick="filterByMonth('all')">Tous</button>
-                <button class="month-btn" onclick="filterByMonth('01')">Jan</button>
-                <button class="month-btn" onclick="filterByMonth('02')">Fév</button>
-                <button class="month-btn" onclick="filterByMonth('03')">Mar</button>
-                <button class="month-btn" onclick="filterByMonth('04')">Avr</button>
-                <button class="month-btn" onclick="filterByMonth('05')">Mai</button>
-                <button class="month-btn" onclick="filterByMonth('06')">Juin</button>
-                <button class="month-btn" onclick="filterByMonth('07')">Juil</button>
-                <button class="month-btn" onclick="filterByMonth('08')">Août</button>
-                <button class="month-btn" onclick="filterByMonth('09')">Sep</button>
-                <button class="month-btn" onclick="filterByMonth('10')">Oct</button>
-                <button class="month-btn" onclick="filterByMonth('11')">Nov</button>
-                <button class="month-btn" onclick="filterByMonth('12')">Déc</button>
+            <div class="alert alert-error" id="error-alert">
+                <i class="fas fa-exclamation-circle"></i> <span id="error-message"></span>
             </div>
             
-            <input type="text" class="search-box" id="searchInput" placeholder="Recherche par date (AAAA-MM-JJ)" onkeyup="searchTable()">
-            
-            <div class="button-group">
-                <button class="export-btn" onclick="exportToExcel()">📊 Exporter Excel</button>
-                <button class="edit-btn" onclick="enableEditMode()">✏️ Éditer Tableau</button>
-                <button class="save-btn" id="saveBtn" onclick="saveChanges()" style="display: none;">💾 Enregistrer</button>
-                <button class="cancel-btn" id="cancelBtn" onclick="cancelEditMode()" style="display: none;">❌ Annuler</button>
+            <!-- Stats -->
+            <div class="stats-container">
+                <div class="stat-box">
+                    <div class="stat-value" id="total-tasks">0</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="pending-tasks">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="completed-tasks">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="my-tasks">0</div>
+                    <div class="stat-label">My Tasks</div>
+                </div>
             </div>
-        </div>
-        
-        <div class="table-container">
-            <table id="dataTable">
-                <thead>
-                    <tr>
-                        <th rowspan="2" class="date-col">Date</th>
-                        <th rowspan="2" class="time-col">Heure</th>
-                        <th colspan="2" class="blue-bg">FORAGE N°1</th>
-                        <th colspan="2" class="red-bg">FORAGE N°2</th>
-                        <th colspan="2" class="blue-bg">FORAGE N°3</th>
-                        <th rowspan="2" class="total-col">Consommation Totale<br>3 Forages</th>
-                        <th rowspan="2"></th>
-                        <th rowspan="2"></th>
-                    </tr>
-                    <tr>
-                        <th class="blue-bg">Index</th>
-                        <th class="blue-bg">Consommation</th>
-                        <th class="red-bg">Index</th>
-                        <th class="red-bg">Consommation</th>
-                        <th class="blue-bg">Index</th>
-                        <th class="blue-bg">Consommation</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <!-- Data will be inserted here by JavaScript -->
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="footer">
-            <div class="company-footer">SOSETE LE PHARE DE CAP BON</div>
-            <p>Système de Surveillance des Forages - Données quotidiennes du 2025-01-02 au 2025-12-20</p>
-            <div class="copyright">Copyright © Hamada 2025 - Tous droits réservés</div>
-            <p style="margin-top: 10px; color: #ffcc00;">Cap Bon, Tunisia 🇹🇳</p>
+            
+            <section class="form-section">
+                <h2><i class="fas fa-plus-circle"></i> Add New Maintenance Task</h2>
+                <form id="maintenance-form">
+                    <div class="form-group">
+                        <label for="task-title">Task Title</label>
+                        <input type="text" id="task-title" placeholder="Enter task title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="task-description">Description</label>
+                        <textarea id="task-description" placeholder="Describe the maintenance task..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="task-category">Category</label>
+                        <select id="task-category">
+                            <option value="electrical">Electrical</option>
+                            <option value="plumbing">Plumbing</option>
+                            <option value="mechanical">Mechanical</option>
+                            <option value="hvac">HVAC</option>
+                            <option value="general">General Maintenance</option>
+                            <option value="safety">Safety Equipment</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <div class="priority-options">
+                            <div class="priority-btn low" data-priority="low">Low</div>
+                            <div class="priority-btn medium active" data-priority="medium">Medium</div>
+                            <div class="priority-btn high" data-priority="high">High</div>
+                        </div>
+                        <input type="hidden" id="task-priority" value="medium">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="task-due-date">Due Date</label>
+                        <input type="date" id="task-due-date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="task-assigned">Assigned To</label>
+                        <input type="text" id="task-assigned" placeholder="Enter name or department">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="task-public"> Make this task visible to all users
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="save-task">
+                        <i class="fas fa-save"></i> Save to Cloud
+                    </button>
+                </form>
+                
+                <div class="storage-info">
+                    <i class="fas fa-cloud"></i> Connected to Firebase Cloud Firestore
+                </div>
+            </section>
+            
+            <section class="tasks-section">
+                <h2><i class="fas fa-tasks"></i> Maintenance Tasks</h2>
+                
+                <div class="filters">
+                    <div class="filter-btn active" data-filter="all">All Tasks</div>
+                    <div class="filter-btn" data-filter="pending">Pending</div>
+                    <div class="filter-btn" data-filter="completed">Completed</div>
+                    <div class="filter-btn" data-filter="my">My Tasks</div>
+                    <div class="filter-btn" data-filter="high">High Priority</div>
+                </div>
+                
+                <div class="tasks-list" id="tasks-container">
+                    <!-- Tasks will be loaded here -->
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>No maintenance tasks yet</h3>
+                        <p>Add your first maintenance task using the form on the left</p>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 
     <script>
-        // Login function
-        function login() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
-            
-            if (username === 'admin' && password === 'parot') {
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
-            } else {
-                errorMessage.style.display = 'block';
-                document.getElementById('password').value = '';
-                setTimeout(() => {
-                    errorMessage.style.display = 'none';
-                }, 3000);
-            }
-        }
-        
-        // Allow pressing Enter to login
-        document.getElementById('password').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                login();
-            }
-        });
-        
-        // COMPLETE 2025 DATA - ALL 364 DAYS
-        const data2025 = [
-            // January 2025 (31 days)
-            ["2025-01-02", "08:00:00", "1270", "***", "38939", "****", "20890", "****", "", "", ""],
-            ["2025-01-03", "08:00:00", "1270", "0", "38939", "0", "20928", "38", "38", "", ""],
-            ["2025-01-04", "08:00:00", "1270", "0", "38939", "0", "20949", "21", "21", "", ""],
-            ["2025-01-05", "08:00:00", "1270", "0", "38939", "0", "20950", "1", "1", "", ""],
-            ["2025-01-06", "08:00:00", "1270", "0", "38939", "0", "20951", "1", "1", "", ""],
-            ["2025-01-07", "08:00:00", "1270", "0", "38939", "0", "20951", "0", "0", "", ""],
-            ["2025-01-08", "08:00:00", "1270", "0", "38939", "0", "20951", "0", "0", "", ""],
-            ["2025-01-09", "08:00:00", "1270", "0", "38939", "0", "20951", "0", "0", "", ""],
-            ["2025-01-10", "08:00:00", "1270", "0", "38980", "41", "20971", "20", "61", "", ""],
-            ["2025-01-11", "08:00:00", "1270", "0", "38997", "17", "20989", "18", "35", "", ""],
-            ["2025-01-12", "08:00:00", "1270", "0", "38997", "0", "20991", "2", "2", "", ""],
-            ["2025-01-13", "08:00:00", "1270", "0", "38997", "0", "20992", "1", "1", "", ""],
-            ["2025-01-14", "08:00:00", "1270", "0", "38997", "0", "20992", "0", "0", "", ""],
-            ["2025-01-15", "08:00:00", "1270", "0", "38997", "0", "20992", "0", "0", "", ""],
-            ["2025-01-16", "08:00:00", "1270", "0", "38997", "0", "20992", "0", "0", "", ""],
-            ["2025-01-17", "08:00:00", "1270", "0", "38997", "0", "20992", "0", "0", "", ""],
-            ["2025-01-18", "08:00:00", "1270", "0", "38997", "0", "21269", "277", "277", "", ""],
-            ["2025-01-19", "07:00:00", "1270", "0", "38997", "0", "21543", "274", "274", "", ""],
-            ["2025-01-20", "07:00:00", "1270", "0", "38997", "0", "21869", "326", "326", "", ""],
-            ["2025-01-21", "07:00:00", "1270", "0", "38997", "0", "22112", "243", "243", "", ""],
-            ["2025-01-22", "07:00:00", "1270", "0", "39066", "69", "22364", "252", "321", "", ""],
-            ["2025-01-23", "07:00:00", "1270", "0", "39141", "75", "22656", "292", "367", "", ""],
-            ["2025-01-24", "07:00:00", "1270", "0", "39141", "0", "22972", "316", "316", "", ""],
-            ["2025-01-25", "07:00:00", "1270", "0", "39141", "0", "23286", "314", "314", "", ""],
-            ["2025-01-26", "07:00:00", "1270", "0", "39141", "0", "23286", "0", "0", "", ""],
-            ["2025-01-27", "07:00:00", "1270", "0", "39141", "0", "23409", "123", "123", "", ""],
-            ["2025-01-28", "07:00:00", "1270", "0", "39141", "0", "23797", "388", "388", "", ""],
-            ["2025-01-29", "07:00:00", "1270", "0", "39218", "77", "24099", "302", "379", "", ""],
-            ["2025-01-30", "07:00:00", "1270", "0", "39298", "80", "24347", "248", "328", "", ""],
-            ["2025-01-31", "07:00:00", "1270", "0", "39357", "59", "24599", "252", "311", "", ""],
-            
-            // February 2025 (28 days)
-            ["2025-02-01", "07:00:00", "1270", "0", "39417", "60", "24766", "167", "227", "", ""],
-            ["2025-02-02", "07:00:00", "1270", "0", "39417", "0", "24766", "0", "0", "", ""],
-            ["2025-02-03", "07:00:00", "1270", "0", "39661", "244", "24970", "204", "448", "", ""],
-            ["2025-02-04", "07:00:00", "1270", "0", "39730", "69", "25217", "247", "316", "", ""],
-            ["2025-02-05", "07:00:00", "1270", "0", "39730", "0", "25494", "277", "277", "", ""],
-            ["2025-02-06", "07:00:00", "1270", "0", "39730", "0", "25631", "137", "137", "", ""],
-            ["2025-02-07", "07:00:00", "1270", "0", "39730", "0", "25754", "123", "123", "", ""],
-            ["2025-02-08", "07:00:00", "1270", "0", "39730", "0", "25887", "133", "133", "", ""],
-            ["2025-02-09", "07:00:00", "1270", "0", "39730", "0", "25910", "23", "23", "", ""],
-            ["2025-02-10", "07:00:00", "1270", "0", "39730", "0", "25955", "45", "45", "", ""],
-            ["2025-02-11", "07:00:00", "1270", "0", "39730", "0", "26056", "101", "101", "", ""],
-            ["2025-02-12", "07:00:00", "1270", "0", "39730", "0", "26202", "146", "146", "", ""],
-            ["2025-02-13", "07:00:00", "1270", "0", "39730", "0", "26287", "85", "85", "", ""],
-            ["2025-02-14", "07:00:00", "1270", "0", "39730", "0", "26308", "21", "21", "", ""],
-            ["2025-02-15", "07:00:00", "1270", "0", "39730", "0", "26308", "0", "0", "", ""],
-            ["2025-02-16", "07:00:00", "1270", "0", "39730", "0", "26308", "0", "0", "", ""],
-            ["2025-02-17", "07:00:00", "1270", "0", "39730", "0", "26437", "129", "129", "", ""],
-            ["2025-02-18", "07:00:00", "1270", "0", "39730", "0", "26577", "140", "140", "", ""],
-            ["2025-02-19", "07:00:00", "1270", "0", "39730", "0", "26577", "0", "0", "", ""],
-            ["2025-02-20", "08:00:00", "1270", "0", "39730", "0", "26654", "77", "77", "", ""],
-            ["2025-02-21", "07:00:00", "1270", "0", "39730", "0", "26654", "0", "0", "", ""],
-            ["2025-02-22", "07:00:00", "1270", "0", "39730", "0", "26865", "211", "211", "", ""],
-            ["2025-02-23", "07:00:00", "1270", "0", "39730", "0", "26865", "0", "0", "", ""],
-            ["2025-02-24", "07:00:00", "1270", "0", "39818", "88", "27072", "207", "295", "", ""],
-            ["2025-02-25", "07:00:00", "1270", "0", "39877", "59", "27426", "354", "413", "", ""],
-            ["2025-02-26", "07:00:00", "1270", "0", "39964", "87", "27813", "387", "474", "", ""],
-            ["2025-02-27", "07:00:00", "1270", "0", "39964", "0", "28043", "230", "230", "", ""],
-            ["2025-02-28", "07:00:00", "1270", "0", "39964", "0", "28273", "230", "230", "", ""],
-            
-            // March 2025 (31 days)
-            ["2025-03-01", "07:00:00", "1270", "0", "39964", "0", "28460", "187", "187", "", ""],
-            ["2025-03-02", "07:00:00", "1270", "0", "39964", "0", "28460", "0", "0", "", ""],
-            ["2025-03-03", "07:00:00", "1270", "0", "39964", "0", "28473", "13", "13", "", ""],
-            ["2025-03-04", "07:00:00", "1270", "0", "39964", "0", "28492", "19", "19", "", ""],
-            ["2025-03-05", "07:00:00", "1270", "0", "39964", "0", "28513", "21", "21", "", ""],
-            ["2025-03-06", "07:00:00", "1270", "0", "39964", "0", "28549", "36", "36", "", ""],
-            ["2025-03-07", "07:00:00", "1270", "0", "39964", "0", "28549", "0", "0", "", ""],
-            ["2025-03-08", "07:00:00", "1270", "0", "39964", "0", "28573", "24", "24", "", ""],
-            ["2025-03-09", "07:00:00", "1270", "0", "39964", "0", "28573", "0", "0", "", ""],
-            ["2025-03-10", "07:00:00", "1270", "0", "40281", "317", "28816", "243", "560", "", ""],
-            ["2025-03-11", "07:00:00", "1270", "0", "40370", "89", "29040", "224", "313", "", ""],
-            ["2025-03-12", "07:00:00", "1270", "0", "40370", "0", "29040", "0", "0", "", ""],
-            ["2025-03-13", "07:00:00", "1270", "0", "40370", "0", "29461", "421", "421", "", ""],
-            ["2025-03-14", "07:00:00", "1270", "0", "40566", "196", "29669", "208", "404", "", ""],
-            ["2025-03-15", "07:00:00", "1270", "0", "40619", "53", "29885", "216", "269", "", ""],
-            ["2025-03-16", "07:00:00", "1270", "0", "40619", "0", "29885", "0", "0", "", ""],
-            ["2025-03-17", "07:00:00", "1270", "0", "40729", "110", "30066", "181", "291", "", ""],
-            ["2025-03-18", "07:00:00", "1270", "0", "40821", "92", "30300", "234", "326", "", ""],
-            ["2025-03-19", "07:00:00", "1270", "0", "40950", "129", "30552", "252", "381", "", ""],
-            ["2025-03-20", "07:00:00", "1270", "0", "40950", "0", "30552", "0", "0", "", ""],
-            ["2025-03-21", "07:00:00", "1270", "0", "41159", "209", "30819", "267", "476", "", ""],
-            ["2025-03-22", "07:00:00", "1270", "0", "41159", "0", "31077", "258", "258", "", ""],
-            ["2025-03-23", "07:00:00", "1270", "0", "41159", "0", "31077", "0", "0", "", ""],
-            ["2025-03-24", "07:00:00", "1270", "0", "41159", "0", "31214", "137", "137", "", ""],
-            ["2025-03-25", "07:00:00", "1270", "0", "41159", "0", "31214", "0", "0", "", ""],
-            ["2025-03-26", "07:00:00", "1270", "0", "41302", "143", "31726", "512", "655", "", ""],
-            ["2025-03-27", "07:00:00", "1270", "0", "41302", "0", "31937", "211", "211", "", ""],
-            ["2025-03-28", "07:00:00", "1270", "0", "41371", "69", "32112", "175", "244", "", ""],
-            ["2025-03-29", "07:00:00", "1270", "0", "41594", "223", "32276", "164", "387", "", ""],
-            ["2025-03-30", "07:00:00", "1270", "0", "41594", "0", "32276", "0", "0", "", ""],
-            ["2025-03-31", "07:00:00", "1270", "0", "41594", "0", "32276", "0", "0", "", ""],
-            
-            // April 2025 (30 days - continuing with pattern)
-            ["2025-04-01", "07:00:00", "1270", "0", "41594", "0", "32276", "0", "0", "", ""],
-            ["2025-04-02", "07:00:00", "1270", "0", "41700", "106", "32510", "234", "340", "", ""],
-            ["2025-04-03", "07:00:00", "1270", "0", "42010", "310", "32719", "209", "519", "", ""],
-            ["2025-04-04", "07:00:00", "1270", "0", "42364", "354", "32939", "220", "574", "", ""],
-            ["2025-04-05", "07:00:00", "1270", "0", "42507", "143", "33206", "267", "410", "", ""],
-            ["2025-04-06", "07:00:00", "1270", "0", "42507", "0", "33206", "0", "0", "", ""],
-            ["2025-04-07", "07:00:00", "1270", "0", "42625", "118", "33449", "243", "361", "", ""],
-            ["2025-04-08", "07:00:00", "1270", "0", "42694", "69", "33624", "175", "244", "", ""],
-            ["2025-04-09", "07:00:00", "1270", "0", "42763", "69", "33835", "211", "280", "", ""],
-            ["2025-04-10", "07:00:00", "1270", "0", "43052", "289", "34074", "239", "528", "", ""],
-            ["2025-04-11", "07:00:00", "1270", "0", "43158", "106", "34194", "120", "226", "", ""],
-            ["2025-04-12", "07:00:00", "1270", "0", "43158", "0", "34233", "39", "39", "", ""],
-            ["2025-04-13", "07:00:00", "1270", "0", "43158", "0", "34233", "0", "0", "", ""],
-            ["2025-04-14", "07:00:00", "1270", "0", "43217", "59", "34266", "33", "92", "", ""],
-            ["2025-04-15", "07:00:00", "1270", "0", "43215", "-2", "34344", "78", "76", "", ""],
-            ["2025-04-16", "07:00:00", "1270", "0", "43213", "-2", "34368", "24", "22", "", ""],
-            ["2025-04-17", "07:00:00", "1270", "0", "43213", "0", "34368", "0", "0", "", ""],
-            ["2025-04-18", "07:00:00", "1270", "0", "43215", "2", "34518", "150", "152", "", ""],
-            ["2025-04-19", "07:00:00", "1270", "0", "43215", "0", "34602", "84", "84", "", ""],
-            ["2025-04-20", "07:00:00", "1270", "0", "43215", "0", "34602", "0", "0", "", ""],
-            ["2025-04-21", "07:00:00", "1270", "0", "43215", "0", "34783", "181", "181", "", ""],
-            ["2025-04-22", "07:00:00", "1270", "0", "43215", "0", "34783", "0", "0", "", ""],
-            ["2025-04-23", "07:00:00", "1270", "0", "43215", "0", "34783", "0", "0", "", ""],
-            ["2025-04-24", "07:00:00", "1270", "0", "43502", "287", "34841", "58", "345", "", ""],
-            ["2025-04-25", "07:00:00", "1270", "0", "43502", "0", "34880", "39", "39", "", ""],
-            ["2025-04-26", "07:00:00", "1270", "0", "43549", "47", "35038", "158", "205", "", ""],
-            ["2025-04-27", "07:00:00", "1270", "0", "43549", "0", "35038", "0", "0", "", ""],
-            ["2025-04-28", "07:00:00", "1270", "0", "43596", "47", "35315", "277", "324", "", ""],
-            ["2025-04-29", "07:00:00", "1270", "0", "44121", "525", "35611", "296", "821", "", ""],
-            ["2025-04-30", "07:00:00", "1270", "0", "44239", "118", "35778", "167", "285", "", ""],
-            
-            // May 2025 (31 days)
-            ["2025-05-01", "07:00:00", "1270", "0", "44239", "0", "35778", "0", "0", "", ""],
-            ["2025-05-02", "07:00:00", "1270", "0", "44348", "109", "35914", "136", "245", "", ""],
-            ["2025-05-03", "07:00:00", "1270", "0", "44413", "65", "35914", "0", "65", "", ""],
-            ["2025-05-04", "07:00:00", "1270", "0", "44413", "0", "35914", "0", "0", "", ""],
-            ["2025-05-05", "07:00:00", "1270", "0", "44413", "0", "35946", "32", "32", "", ""],
-            ["2025-05-06", "07:00:00", "1270", "0", "44653", "240", "36215", "269", "509", "", ""],
-            ["2025-05-07", "07:00:00", "1270", "0", "44653", "0", "36251", "36", "36", "", ""],
-            ["2025-05-08", "07:00:00", "1270", "0", "45191", "538", "36552", "301", "839", "", ""],
-            ["2025-05-09", "07:00:00", "1270", "0", "45350", "159", "36764", "212", "371", "", ""],
-            ["2025-05-10", "07:00:00", "1270", "0", "45396", "46", "37047", "283", "329", "", ""],
-            ["2025-05-11", "07:00:00", "1270", "0", "45396", "0", "37047", "0", "0", "", ""],
-            ["2025-05-12", "07:00:00", "1270", "0", "45396", "0", "37200", "153", "153", "", ""],
-            ["2025-05-13", "07:00:00", "1270", "0", "45915", "519", "37466", "266", "785", "", ""],
-            ["2025-05-14", "07:00:00", "1270", "0", "45915", "0", "37543", "77", "77", "", ""],
-            ["2025-05-15", "07:00:00", "1270", "0", "45960", "45", "37696", "153", "198", "", ""],
-            ["2025-05-16", "07:00:00", "1270", "0", "46054", "94", "37809", "113", "207", "", ""],
-            ["2025-05-17", "07:00:00", "1270", "0", "46054", "0", "37933", "124", "124", "", ""],
-            ["2025-05-18", "07:00:00", "1270", "0", "46054", "0", "37933", "0", "0", "", ""],
-            ["2025-05-19", "07:00:00", "1270", "0", "46063", "9", "38230", "297", "306", "", ""],
-            ["2025-05-20", "07:00:00", "1270", "0", "46339", "276", "38461", "231", "507", "", ""],
-            ["2025-05-21", "07:00:00", "1270", "0", "46575", "236", "38621", "160", "396", "", ""],
-            ["2025-05-22", "07:00:00", "1270", "0", "46673", "98", "38776", "155", "253", "", ""],
-            ["2025-05-23", "07:00:00", "1270", "0", "46795", "122", "38924", "148", "270", "", ""],
-            ["2025-05-24", "07:00:00", "1270", "0", "47172", "377", "39039", "115", "492", "", ""],
-            ["2025-05-25", "07:00:00", "1270", "0", "47172", "0", "39039", "0", "0", "", ""],
-            ["2025-05-26", "07:00:00", "1270", "0", "47570", "398", "39169", "130", "528", "", ""],
-            ["2025-05-27", "07:00:00", "1270", "0", "48072", "502", "39415", "246", "748", "", ""],
-            ["2025-05-28", "07:00:00", "1270", "0", "48567", "495", "39618", "203", "698", "", ""],
-            ["2025-05-29", "07:00:00", "1270", "0", "49077", "510", "39882", "264", "774", "", ""],
-            ["2025-05-30", "07:00:00", "1270", "0", "49588", "511", "40173", "291", "802", "", ""],
-            ["2025-05-31", "07:00:00", "1270", "0", "50093", "505", "40461", "288", "793", "", ""],
-            
-            // June 2025 (30 days)
-            ["2025-06-01", "07:00:00", "1270", "0", "50093", "0", "40461", "0", "0", "", ""],
-            ["2025-06-02", "07:00:00", "1270", "0", "50580", "487", "40673", "212", "699", "", ""],
-            ["2025-06-03", "07:00:00", "1270", "0", "51162", "582", "41037", "364", "946", "", ""],
-            ["2025-06-04", "07:00:00", "1270", "0", "51793", "631", "41455", "418", "1049", "", ""],
-            ["2025-06-05", "07:00:00", "1270", "0", "51793", "0", "41455", "0", "0", "", ""],
-            ["2025-06-06", "07:00:00", "1270", "0", "51793", "0", "41455", "0", "0", "", ""],
-            ["2025-06-07", "07:00:00", "1270", "0", "51793", "0", "41455", "0", "0", "", ""],
-            ["2025-06-08", "07:00:00", "1270", "0", "51793", "0", "41455", "0", "0", "", ""],
-            ["2025-06-09", "07:00:00", "1270", "0", "52515", "722", "41806", "351", "1073", "", ""],
-            ["2025-06-10", "07:00:00", "1270", "0", "52783", "268", "42001", "195", "463", "", ""],
-            ["2025-06-11", "07:00:00", "1270", "0", "53184", "401", "42291", "290", "691", "", ""],
-            ["2025-06-12", "07:00:00", "1270", "0", "53711", "527", "42550", "259", "786", "", ""],
-            ["2025-06-13", "07:00:00", "1270", "0", "54436", "725", "42838", "288", "1013", "", ""],
-            ["2025-06-14", "07:00:00", "1270", "0", "55125", "689", "43118", "280", "969", "", ""],
-            ["2025-06-15", "07:00:00", "1270", "0", "55125", "0", "43118", "0", "0", "", ""],
-            ["2025-06-16", "07:00:00", "1270", "0", "56054", "929", "43118", "0", "929", "", ""],
-            ["2025-06-17", "07:00:00", "1270", "0", "56881", "827", "43661", "543", "1370", "", ""],
-            ["2025-06-18", "07:00:00", "1270", "0", "57535", "654", "43939", "278", "932", "", ""],
-            ["2025-06-19", "07:00:00", "1270", "0", "58120", "585", "44198", "259", "844", "", ""],
-            ["2025-06-20", "07:00:00", "1270", "0", "58629", "509", "44425", "227", "736", "", ""],
-            ["2025-06-21", "07:00:00", "1270", "0", "58946", "317", "44575", "150", "467", "", ""],
-            ["2025-06-22", "07:00:00", "1270", "0", "58946", "0", "44575", "0", "0", "", ""],
-            ["2025-06-23", "07:00:00", "1270", "0", "59316", "370", "44703", "128", "498", "", ""],
-            ["2025-06-24", "07:00:00", "1880", "610", "59902", "586", "44918", "215", "1411", "", ""],
-            ["2025-06-25", "07:00:00", "2070", "190", "60270", "368", "45071", "153", "711", "", ""],
-            ["2025-06-26", "07:00:00", "2070", "0", "60270", "0", "45071", "0", "0", "", ""],
-            ["2025-06-27", "07:00:00", "2941", "871", "61016", "746", "45116", "45", "1662", "", ""],
-            ["2025-06-28", "07:00:00", "3203", "262", "61823", "807", "45164", "48", "1117", "", ""],
-            ["2025-06-29", "07:00:00", "3203", "0", "61823", "0", "45164", "0", "0", "", ""],
-            ["2025-06-30", "07:00:00", "3270", "67", "62867", "1044", "45173", "9", "1120", "", ""],
-            
-            // July 2025 (31 days)
-            ["2025-07-01", "07:00:00", "3587", "317", "63707", "840", "45180", "7", "1164", "", ""],
-            ["2025-07-02", "07:00:00", "3701", "114", "64330", "623", "45180", "0", "737", "", ""],
-            ["2025-07-03", "07:00:00", "3701", "0", "64996", "666", "45180", "0", "666", "", ""],
-            ["2025-07-04", "07:00:00", "3776", "75", "65480", "484", "45180", "0", "559", "", ""],
-            ["2025-07-05", "07:00:00", "3934", "158", "66091", "611", "45180", "0", "769", "", ""],
-            ["2025-07-06", "07:00:00", "4019", "85", "66645", "554", "45180", "0", "639", "", ""],
-            ["2025-07-07", "07:00:00", "4178", "159", "67436", "791", "45180", "0", "950", "", ""],
-            ["2025-07-08", "07:00:00", "4474", "296", "68142", "706", "45180", "0", "1002", "", ""],
-            ["2025-07-09", "07:00:00", "4937", "463", "69002", "860", "45679", "499", "1822", "", ""],
-            ["2025-07-10", "07:00:00", "5030", "93", "69717", "715", "46767", "1088", "1896", "", ""],
-            ["2025-07-11", "07:00:00", "5097", "67", "70280", "563", "46767", "0", "630", "", ""],
-            ["2025-07-12", "07:00:00", "5097", "0", "70887", "607", "47270", "503", "1110", "", ""],
-            ["2025-07-13", "07:00:00", "5097", "0", "70887", "0", "47270", "0", "0", "", ""],
-            ["2025-07-14", "07:00:00", "5382", "285", "72161", "1274", "47704", "434", "1993", "", ""],
-            ["2025-07-15", "07:00:00", "5382", "0", "72900", "739", "47978", "274", "1013", "", ""],
-            ["2025-07-16", "07:00:00", "5382", "0", "73527", "627", "49547", "1569", "2196", "", ""],
-            ["2025-07-17", "07:00:00", "5382", "0", "73527", "0", "49547", "0", "0", "", ""],
-            ["2025-07-18", "07:00:00", "5594", "212", "74713", "1186", "50873", "1326", "2724", "", ""],
-            ["2025-07-19", "07:00:00", "5644", "50", "75300", "587", "51482", "609", "1246", "", ""],
-            ["2025-07-20", "07:00:00", "5703", "59", "75841", "541", "52002", "520", "1120", "", ""],
-            ["2025-07-21", "07:00:00", "5703", "0", "76288", "447", "52500", "498", "945", "", ""],
-            ["2025-07-22", "07:00:00", "5703", "0", "76788", "500", "53037", "537", "1037", "", ""],
-            ["2025-07-23", "07:00:00", "5703", "0", "76788", "0", "53037", "0", "0", "", ""],
-            ["2025-07-24", "07:00:00", "5758", "55", "77704", "916", "53690", "653", "1624", "", ""],
-            ["2025-07-25", "07:00:00", "6002", "244", "78437", "733", "53690", "0", "977", "", ""],
-            ["2025-07-26", "07:00:00", "6250", "248", "78933", "496", "53690", "0", "744", "", ""],
-            ["2025-07-27", "07:00:00", "6425", "175", "79419", "486", "53690", "0", "661", "", ""],
-            ["2025-07-28", "07:00:00", "6491", "66", "79866", "447", "53690", "0", "513", "", ""],
-            ["2025-07-29", "07:00:00", "6597", "106", "80434", "568", "53690", "0", "674", "", ""],
-            ["2025-07-30", "07:00:00", "6597", "0", "80434", "0", "53690", "0", "0", "", ""],
-            ["2025-07-31", "07:00:00", "6844", "247", "81505", "1071", "54058", "368", "1686", "", ""],
-            
-            // August 2025 (31 days)
-            ["2025-08-01", "07:00:00", "6844", "0", "81857", "352", "54373", "315", "667", "", ""],
-            ["2025-08-02", "07:00:00", "6844", "0", "82278", "421", "54736", "363", "784", "", ""],
-            ["2025-08-03", "07:00:00", "6844", "0", "82560", "282", "54964", "228", "510", "", ""],
-            ["2025-08-04", "07:00:00", "6844", "0", "82707", "147", "55241", "277", "424", "", ""],
-            ["2025-08-05", "07:00:00", "6844", "0", "82764", "57", "55382", "141", "198", "", ""],
-            ["2025-08-06", "07:00:00", "6844", "0", "83125", "361", "55511", "129", "490", "", ""],
-            ["2025-08-07", "07:00:00", "6844", "0", "83125", "0", "55733", "222", "222", "", ""],
-            ["2025-08-08", "07:00:00", "6844", "0", "83391", "266", "55840", "107", "373", "", ""],
-            ["2025-08-09", "07:00:00", "6844", "0", "83455", "64", "56185", "345", "409", "", ""],
-            ["2025-08-10", "07:00:00", "6844", "0", "83455", "0", "56441", "256", "256", "", ""],
-            ["2025-08-11", "07:00:00", "6844", "0", "83553", "98", "56728", "287", "385", "", ""],
-            ["2025-08-12", "07:00:00", "6844", "0", "83828", "275", "57020", "292", "567", "", ""],
-            ["2025-08-13", "07:00:00", "6844", "0", "84008", "180", "57308", "288", "468", "", ""],
-            ["2025-08-14", "07:00:00", "6844", "0", "84175", "167", "57585", "277", "444", "", ""],
-            ["2025-08-15", "07:00:00", "6945", "101", "84629", "454", "57938", "353", "908", "", ""],
-            ["2025-08-16", "07:00:00", "6945", "0", "85105", "476", "57938", "0", "476", "", ""],
-            ["2025-08-17", "07:00:00", "6945", "0", "85207", "102", "58562", "624", "726", "", ""],
-            ["2025-08-18", "07:00:00", "6945", "0", "85620", "413", "58939", "377", "790", "", ""],
-            ["2025-08-19", "07:00:00", "6945", "0", "85890", "270", "59249", "310", "580", "", ""],
-            ["2025-08-20", "07:00:00", "6985", "40", "86362", "472", "59545", "296", "808", "", ""],
-            ["2025-08-21", "07:00:00", "6985", "0", "86552", "190", "59898", "353", "543", "", ""],
-            ["2025-08-22", "07:00:00", "6985", "0", "86968", "216", "60214", "316", "532", "", ""],
-            ["2025-08-23", "07:00:00", "6985", "0", "87329", "361", "60508", "294", "655", "", ""],
-            ["2025-08-24", "07:00:00", "6985", "0", "87909", "580", "60952", "444", "1024", "", ""],
-            ["2025-08-25", "07:00:00", "7060", "75", "88608", "699", "61568", "616", "1390", "", ""],
-            ["2025-08-26", "07:00:00", "7195", "135", "89125", "517", "61944", "376", "1028", "", ""],
-            ["2025-08-27", "07:00:00", "7195", "0", "89721", "596", "62465", "521", "1117", "", ""],
-            ["2025-08-28", "07:00:00", "7374", "179", "90229", "508", "62976", "511", "1198", "", ""],
-            ["2025-08-29", "07:00:00", "7471", "97", "90229", "0", "63496", "520", "617", "", ""],
-            ["2025-08-30", "07:00:00", "7778", "307", "91489", "1260", "63983", "487", "2054", "", ""],
-            ["2025-08-31", "07:00:00", "7835", "57", "92720", "1231", "64430", "447", "1735", "", ""],
-            
-            // September 2025 (30 days)
-            ["2025-09-01", "07:00:00", "7908", "73", "92729", "9", "65043", "613", "695", "", ""],
-            ["2025-09-02", "07:00:00", "8227", "319", "93408", "679", "65604", "561", "1559", "", ""],
-            ["2025-09-03", "07:00:00", "8410", "183", "94055", "647", "66085", "481", "1311", "", ""],
-            ["2025-09-04", "07:00:00", "8825", "415", "94274", "219", "66579", "494", "1128", "", ""],
-            ["2025-09-05", "07:00:00", "9293", "468", "94274", "0", "67049", "470", "938", "", ""],
-            ["2025-09-06", "07:00:00", "9869", "576", "94274", "0", "67515", "466", "1042", "", ""],
-            ["2025-09-07", "07:00:00", "10391", "522", "94291", "17", "68088", "573", "1112", "", ""],
-            ["2025-09-08", "07:00:00", "10391", "0", "94783", "492", "68088", "0", "492", "", ""],
-            ["2025-09-09", "07:00:00", "10391", "0", "94783", "0", "68088", "0", "0", "", ""],
-            ["2025-09-10", "07:00:00", "10391", "0", "94783", "0", "68088", "0", "0", "", ""],
-            ["2025-09-11", "07:00:00", "10952", "561", "96024", "1241", "68088", "0", "1802", "", ""],
-            ["2025-09-12", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-13", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-14", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-15", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-16", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-17", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-18", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-19", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-20", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-21", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-22", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-23", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-24", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-25", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-26", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-27", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-28", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-29", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-09-30", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            
-            // October 2025 (31 days - all same values)
-            ["2025-10-01", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-02", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-03", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-04", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-05", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-06", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-07", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-08", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-09", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-10", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-11", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-12", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-13", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-14", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-15", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-16", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-17", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-18", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-19", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-20", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-21", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-22", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-23", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-24", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-25", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-26", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-27", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-28", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-29", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-30", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-10-31", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            
-            // November 2025 (30 days - first 23 same, then data changes)
-            ["2025-11-01", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-02", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-03", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-04", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-05", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-06", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-07", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-08", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-09", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-10", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-11", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-12", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-13", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-14", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-15", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-16", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-17", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-18", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-19", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-20", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-21", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-22", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-23", "07:00:00", "10952", "0", "96024", "0", "68088", "0", "0", "", ""],
-            ["2025-11-24", "07:00:00", "18290", "7338", "132450", "36426", "102001", "33913", "77677", "", ""],
-            ["2025-11-25", "07:00:00", "18306", "16", "132500", "50", "102088", "87", "153", "", ""],
-            ["2025-11-26", "07:00:00", "18306", "0", "132500", "0", "102088", "0", "0", "", ""],
-            ["2025-11-27", "07:00:00", "18306", "0", "132813", "313", "102090", "2", "315", "", ""],
-            ["2025-11-28", "07:00:00", "18306", "0", "132813", "0", "102090", "0", "0", "", ""],
-            ["2025-11-29", "07:00:00", "18306", "0", "133293", "480", "102865", "775", "1255", "", ""],
-            ["2025-11-30", "07:00:00", "18306", "0", "133845", "552", "103363", "498", "1050", "", ""],
-            
-            // December 2025 (20 days with data)
-            ["2025-12-01", "07:00:00", "18306", "0", "133930", "85", "103672", "309", "394", "", ""],
-            ["2025-12-02", "07:00:00", "18306", "0", "134013", "83", "103800", "128", "211", "", ""],
-            ["2025-12-03", "07:00:00", "18306", "0", "134017", "4", "104315", "515", "519", "", ""],
-            ["2025-12-04", "07:00:00", "18306", "0", "134021", "4", "104598", "283", "287", "", ""],
-            ["2025-12-05", "07:00:00", "18306", "0", "134033", "12", "104987", "389", "401", "", ""],
-            ["2025-12-06", "07:00:00", "18306", "0", "134038", "5", "105198", "211", "216", "", ""],
-            ["2025-12-07", "07:00:00", "18306", "0", "134411", "373", "105202", "4", "377", "", ""],
-            ["2025-12-08", "07:00:00", "18306", "0", "134475", "64", "105481", "279", "343", "", ""],
-            ["2025-12-09", "07:00:00", "18306", "0", "134832", "357", "105481", "0", "357", "", ""],
-            ["2025-12-10", "07:00:00", "18306", "0", "134919", "87", "106118", "637", "724", "", ""],
-            ["2025-12-11", "07:00:00", "18306", "0", "135288", "369", "106440", "322", "691", "", ""],
-            ["2025-12-12", "07:00:00", "18306", "0", "135600", "312", "106687", "247", "559", "", ""],
-            ["2025-12-13", "07:00:00", "18306", "0", "135936", "336", "165497", "58810", "59146", "", ""],
-            ["2025-12-14", "07:00:00", "", "", "", "", "", "", "", "", "", ""],
-            ["2025-12-15", "07:00:00", "18306", "0", "136151", "215", "107214", "717", "932", "", ""],
-            ["2025-12-16", "07:00:00", "18306", "0", "136637", "486", "107214", "0", "486", "", ""],
-            ["2025-12-17", "07:00:00", "", "", "", "", "", "", "", "", "", ""],
-            ["2025-12-18", "07:00:00", "18306", "0", "137091", "454", "107781", "567", "1021", "", ""],
-            ["2025-12-19", "07:00:00", "18306", "0", "137270", "179", "107781", "0", "179", "", ""],
-            ["2025-12-20", "07:00:00", "", "", "", "", "", "", "", "", "", ""]
-        ];
-        
-        // Data for 2026 (empty template)
-        const data2026 = [];
-        for (let i = 0; i < 364; i++) {
-            data2026.push(["", "", "", "", "", "", "", "", "", "", ""]);
-        }
-        
-        // Current displayed data
-        let currentData = data2025;
-        let currentYear = 2025;
-        let currentFilter = 'all';
-        let isEditMode = false;
-        let originalData = null;
-        
-        // Function to format date
-        function formatDate(dateStr) {
-            if (!dateStr) return "";
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric' 
-            });
-        }
-        
-        // Function to get month from date
-        function getMonthFromDate(dateStr) {
-            if (!dateStr) return "";
-            return dateStr.substring(5, 7); // YYYY-MM-DD -> MM
-        }
-        
-        // Function to populate table
-        function populateTable(data, year, filter = 'all') {
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = '';
-            
-            // Update title
-            document.getElementById('yearTitle').textContent = year + (filter !== 'all' ? ` - Mois ${filter}` : ' - Données Complètes Quotidiennes');
-            
-            let filteredData = data;
-            if (filter !== 'all') {
-                filteredData = data.filter(row => getMonthFromDate(row[0]) === filter);
-            }
-            
-            // Populate rows
-            filteredData.forEach((row, index) => {
-                const tr = document.createElement('tr');
-                
-                // Add month-based background with red/blue theme
-                const month = getMonthFromDate(row[0]);
-                if (month === '01' || month === '04' || month === '07' || month === '10') tr.classList.add('forage-1'); // Blue
-                else if (month === '02' || month === '05' || month === '08' || month === '11') tr.classList.add('forage-2'); // Red
-                else tr.classList.add('forage-3'); // Light blue
-                
-                row.forEach((cell, cellIndex) => {
-                    const td = document.createElement('td');
-                    
-                    // Format date in first column
-                    if (cellIndex === 0 && cell) {
-                        td.textContent = formatDate(cell);
-                        td.classList.add('date-col');
-                    } else if (cellIndex === 1 && cell) {
-                        // Time column
-                        td.textContent = cell;
-                        td.classList.add('time-col');
-                    } else if (cellIndex === 8) {
-                        // Total consumption column
-                        td.textContent = cell;
-                        td.classList.add('total-col');
-                    } else if (cell === "") {
-                        td.classList.add('empty-cell');
-                        td.innerHTML = "&nbsp;";
-                    } else {
-                        td.textContent = cell;
-                        
-                        // Add special formatting for formulas
-                        if (cell.toString().startsWith('=')) {
-                            td.style.fontStyle = 'italic';
-                            td.style.color = '#0a2463';
-                        }
-                        
-                        // Highlight high consumption values in red
-                        if (cellIndex === 3 || cellIndex === 5 || cellIndex === 7) {
-                            const numValue = parseInt(cell);
-                            if (!isNaN(numValue) && numValue > 500) {
-                                td.classList.add('highlight-red');
-                            } else if (!isNaN(numValue) && numValue > 100) {
-                                td.classList.add('highlight-blue');
-                            }
-                        }
-                    }
-                    
-                    tr.appendChild(td);
-                });
-                
-                tableBody.appendChild(tr);
-            });
-            
-            // Update statistics
-            updateStatistics(data, year);
-            
-            // If in edit mode, make cells editable
-            if (isEditMode) {
-                enableEditMode();
-            }
-        }
-        
-        // Function to update statistics
-        function updateStatistics(data, year) {
-            if (year === 2025) {
-                // Calculate totals (simplified - using last values)
-                const lastRow = data.find(row => row[2] && row[4] && row[6]);
-                if (lastRow) {
-                    document.getElementById('totalForage1').textContent = lastRow[2];
-                    document.getElementById('totalForage2').textContent = lastRow[4];
-                    document.getElementById('totalForage3').textContent = lastRow[6];
-                }
-                document.getElementById('totalDays').textContent = data.filter(row => row[0]).length;
-            } else {
-                document.getElementById('totalDays').textContent = "0";
-                document.getElementById('totalForage1').textContent = "0";
-                document.getElementById('totalForage2').textContent = "0";
-                document.getElementById('totalForage3').textContent = "0";
-            }
-        }
-        
-        // Function to show specific sheet
-        function showSheet(year) {
-            // Cancel edit mode if active
-            if (isEditMode) {
-                if (!confirm("Les modifications non enregistrées seront perdues. Voulez-vous continuer ?")) {
-                    return;
-                }
-                cancelEditMode();
-            }
-            
-            // Update active button
-            document.querySelectorAll('.sheet-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Update current data
-            currentYear = year;
-            currentData = year === 2025 ? data2025 : data2026;
-            
-            // Show appropriate data
-            populateTable(currentData, year, currentFilter);
-            
-            // Show/hide statistics for 2026
-            document.getElementById('statsPanel').style.display = year === 2025 ? 'block' : 'none';
-        }
-        
-        // Function to filter by month
-        function filterByMonth(month) {
-            // Cancel edit mode if active
-            if (isEditMode) {
-                if (!confirm("Les modifications non enregistrées seront perdues. Voulez-vous continuer ?")) {
-                    return;
-                }
-                cancelEditMode();
-            }
-            
-            // Update active month button
-            document.querySelectorAll('.month-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            currentFilter = month;
-            populateTable(currentData, currentYear, month);
-        }
-        
-        // Function to search table
-        function searchTable() {
-            const input = document.getElementById('searchInput').value.toLowerCase();
-            const rows = document.querySelectorAll('#tableBody tr');
-            
-            rows.forEach(row => {
-                const dateCell = row.querySelector('td');
-                if (dateCell) {
-                    const dateText = dateCell.textContent.toLowerCase();
-                    if (dateText.includes(input) || input === '') {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                }
-            });
-        }
-        
-        // Function to enable edit mode
-        function enableEditMode() {
-            if (isEditMode) return;
-            
-            isEditMode = true;
-            
-            // Save original data
-            originalData = JSON.parse(JSON.stringify(currentData));
-            
-            // Make all data cells editable except date, total and empty columns
-            const cells = document.querySelectorAll('#tableBody td');
-            cells.forEach((cell, index) => {
-                // Don't make date column (0), total column (8), or last two columns editable
-                const cellIndex = index % 11;
-                if (cellIndex !== 0 && cellIndex !== 8 && cellIndex !== 9 && cellIndex !== 10) {
-                    cell.classList.add('editable');
-                    cell.setAttribute('contenteditable', 'true');
-                    
-                    // Add input event to update background
-                    cell.addEventListener('input', function() {
-                        this.style.backgroundColor = '#ffff99';
-                    });
-                }
-            });
-            
-            // Show notification
-            document.getElementById('editNotification').style.display = 'block';
-            
-            // Show save and cancel buttons, hide edit button
-            document.getElementById('saveBtn').style.display = 'flex';
-            document.getElementById('cancelBtn').style.display = 'flex';
-            document.querySelector('.edit-btn').style.display = 'none';
-            
-            // Change table container style
-            document.querySelector('.table-container').classList.add('edit-mode');
-            
-            // Hide notification after 5 seconds
-            setTimeout(() => {
-                document.getElementById('editNotification').style.display = 'none';
-            }, 5000);
-        }
-        
-        // Function to save changes
-        function saveChanges() {
-            if (!isEditMode) return;
-            
-            // Get all rows from table
-            const rows = document.querySelectorAll('#tableBody tr');
-            
-            // For each row, update the data in currentData
-            rows.forEach((row, rowIndex) => {
-                const cells = row.querySelectorAll('td');
-                const dateCell = cells[0].textContent;
-                
-                // Convert formatted date back to YYYY-MM-DD
-                const date = new Date(dateCell);
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const dateStr = `${year}-${month}-${day}`;
-                
-                // Find the index of this date in currentData
-                const dataIndex = currentData.findIndex(item => item[0] === dateStr);
-                
-                if (dataIndex !== -1) {
-                    // Update each cell value
-                    cells.forEach((cell, cellIndex) => {
-                        if (cellIndex !== 0 && cellIndex !== 8 && cellIndex !== 9 && cellIndex !== 10) {
-                            currentData[dataIndex][cellIndex] = cell.textContent;
-                        }
-                    });
-                }
-            });
-            
-            // Exit edit mode
-            cancelEditMode();
-            
-            // Show save notification
-            document.getElementById('saveNotification').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('saveNotification').style.display = 'none';
-            }, 3000);
-            
-            // Update statistics
-            updateStatistics(currentData, currentYear);
-        }
-        
-        // Function to cancel edit mode
-        function cancelEditMode() {
-            if (!isEditMode) return;
-            
-            isEditMode = false;
-            
-            // Restore original data
-            if (originalData) {
-                currentData = JSON.parse(JSON.stringify(originalData));
-                originalData = null;
-            }
-            
-            // Remove editable attributes
-            const cells = document.querySelectorAll('#tableBody td');
-            cells.forEach(cell => {
-                cell.classList.remove('editable');
-                cell.removeAttribute('contenteditable');
-                cell.style.backgroundColor = '';
-            });
-            
-            // Hide notification
-            document.getElementById('editNotification').style.display = 'none';
-            
-            // Show edit button, hide save and cancel buttons
-            document.getElementById('saveBtn').style.display = 'none';
-            document.getElementById('cancelBtn').style.display = 'none';
-            document.querySelector('.edit-btn').style.display = 'flex';
-            
-            // Change table container style back
-            document.querySelector('.table-container').classList.remove('edit-mode');
-            
-            // Re-populate table with original data
-            populateTable(currentData, currentYear, currentFilter);
-        }
-        
-        // Function to export table to Excel
-        function exportToExcel() {
-            // Cancel edit mode if active
-            if (isEditMode) {
-                if (!confirm("Les modifications non enregistrées seront perdues. Voulez-vous continuer ?")) {
-                    return;
-                }
-                cancelEditMode();
-            }
-            
-            // Get table data
-            const table = document.getElementById('dataTable');
-            const rows = table.querySelectorAll('tr');
-            
-            // Create CSV content
-            let csvContent = "";
-            
-            // Add headers
-            const headers = [];
-            const headerRow1 = rows[0];
-            const headerRow2 = rows[1];
-            
-            // Process first header row
-            const headerCells1 = headerRow1.querySelectorAll('th');
-            const headerCells2 = headerRow2.querySelectorAll('th');
-            
-            // Special handling for merged headers
-            let colIndex = 0;
-            headerCells1.forEach((cell, index) => {
-                const rowspan = parseInt(cell.getAttribute('rowspan') || '1');
-                const colspan = parseInt(cell.getAttribute('colspan') || '1');
-                
-                if (rowspan === 2) {
-                    // This cell spans both rows
-                    for (let i = 0; i < colspan; i++) {
-                        headers[colIndex + i] = cell.textContent.trim();
-                    }
-                    colIndex += colspan;
-                } else if (colspan > 1) {
-                    // This cell spans multiple columns in first row
-                    // Second row will have the detailed headers
-                    for (let i = 0; i < colspan; i++) {
-                        const detailCell = headerCells2[i];
-                        headers[colIndex + i] = cell.textContent.trim() + " " + detailCell.textContent.trim();
-                    }
-                    colIndex += colspan;
-                } else {
-                    headers[colIndex] = cell.textContent.trim();
-                    colIndex++;
-                }
-            });
-            
-            // Add header row to CSV
-            csvContent += headers.join(',') + '\n';
-            
-            // Add data rows
-            for (let i = 2; i < rows.length; i++) {
-                const row = rows[i];
-                const cells = row.querySelectorAll('td');
-                const rowData = [];
-                
-                cells.forEach(cell => {
-                    let cellText = cell.textContent.trim();
-                    // Handle special characters in CSV
-                    if (cellText.includes(',') || cellText.includes('"') || cellText.includes('\n')) {
-                        cellText = '"' + cellText.replace(/"/g, '""') + '"';
-                    }
-                    rowData.push(cellText);
-                });
-                
-                csvContent += rowData.join(',') + '\n';
-            }
-            
-            // Create blob and download
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            
-            // Create filename based on current view
-            let filename = `Sosete_Forages_${currentYear}`;
-            if (currentFilter !== 'all') {
-                const monthNames = {
-                    '01': 'Janvier', '02': 'Février', '03': 'Mars', '04': 'Avril',
-                    '05': 'Mai', '06': 'Juin', '07': 'Juillet', '08': 'Août',
-                    '09': 'Septembre', '10': 'Octobre', '11': 'Novembre', '12': 'Décembre'
-                };
-                filename += `_${monthNames[currentFilter]}`;
-            }
-            filename += `_${new Date().toISOString().slice(0,10)}.csv`;
-            
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Show notification
-            alert(`Données exportées avec succès!\nFichier: ${filename}`);
-        }
-        
-        // Initialize with 2025 data
-        window.onload = function() {
-            populateTable(data2025, 2025);
+        // Firebase Configuration
+        // Replace with your own Firebase configuration
+        const firebaseConfig = {
+             apiKey: "AIzaSyDVibHugZ_t9nRqw5hUIGk5rLyI94eoNYI",
+  authDomain: "final-e12f9.firebaseapp.com",
+  projectId: "final-e12f9",
+  storageBucket: "final-e12f9.firebasestorage.app",
+  messagingSenderId: "403146665818",
+  appId: "1:403146665818:web:6cbbccda9ba9bdc94b4d63"
         };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        
+        // DOM Elements
+        const authSection = document.getElementById('auth-section');
+        const mainContent = document.getElementById('main-content');
+        const userInfo = document.getElementById('user-info');
+        const userName = document.getElementById('user-name');
+        const userAvatar = document.getElementById('user-avatar');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const loginTab = document.getElementById('login-tab');
+        const registerTab = document.getElementById('register-tab');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const maintenanceForm = document.getElementById('maintenance-form');
+        const tasksContainer = document.getElementById('tasks-container');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const priorityButtons = document.querySelectorAll('.priority-btn');
+        const successAlert = document.getElementById('success-alert');
+        const errorAlert = document.getElementById('error-alert');
+        const successMessage = document.getElementById('success-message');
+        const errorMessage = document.getElementById('error-message');
+        
+        // Stats elements
+        const totalTasksEl = document.getElementById('total-tasks');
+        const pendingTasksEl = document.getElementById('pending-tasks');
+        const completedTasksEl = document.getElementById('completed-tasks');
+        const myTasksEl = document.getElementById('my-tasks');
+        
+        // Current state
+        let tasks = [];
+        let currentFilter = 'all';
+        let editingTaskId = null;
+        let currentUser = null;
+        let tasksListener = null;
+        
+        // Show alert function
+        function showAlert(type, message) {
+            if (type === 'success') {
+                successMessage.textContent = message;
+                successAlert.style.display = 'block';
+                errorAlert.style.display = 'none';
+                
+                setTimeout(() => {
+                    successAlert.style.display = 'none';
+                }, 3000);
+            } else {
+                errorMessage.textContent = message;
+                errorAlert.style.display = 'block';
+                successAlert.style.display = 'none';
+                
+                setTimeout(() => {
+                    errorAlert.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Initialize the app
+        function init() {
+            // Check if user is already logged in
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // User is signed in
+                    currentUser = user;
+                    showMainApp();
+                } else {
+                    // No user is signed in
+                    showAuth();
+                }
+            });
+            
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('task-due-date').min = today;
+            
+            // Event listeners for auth tabs
+            loginTab.addEventListener('click', () => {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            });
+            
+            registerTab.addEventListener('click', () => {
+                registerTab.classList.add('active');
+                loginTab.classList.remove('active');
+                registerForm.style.display = 'block';
+                loginForm.style.display = 'none';
+            });
+            
+            // Login button
+            loginBtn.addEventListener('click', loginUser);
+            
+            // Register button
+            registerBtn.addEventListener('click', registerUser);
+            
+            // Logout button
+            logoutBtn.addEventListener('click', logoutUser);
+            
+            // Priority button selection
+            priorityButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    priorityButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('task-priority').value = this.dataset.priority;
+                });
+            });
+            
+            // Filter button click handlers
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+                    renderTasks();
+                });
+            });
+            
+            // Form submission
+            maintenanceForm.addEventListener('submit', saveTask);
+        }
+        
+        // Show authentication screen
+        function showAuth() {
+            authSection.style.display = 'block';
+            mainContent.style.display = 'none';
+            userInfo.style.display = 'none';
+            
+            // Clear forms
+            document.getElementById('login-email').value = '';
+            document.getElementById('login-password').value = '';
+            document.getElementById('register-name').value = '';
+            document.getElementById('register-email').value = '';
+            document.getElementById('register-password').value = '';
+        }
+        
+        // Show main application
+        function showMainApp() {
+            authSection.style.display = 'none';
+            mainContent.style.display = 'grid';
+            userInfo.style.display = 'flex';
+            
+            // Set user info
+            userName.textContent = currentUser.displayName || currentUser.email.split('@')[0];
+            userAvatar.textContent = (currentUser.displayName || currentUser.email[0]).toUpperCase();
+            
+            // Load tasks from Firestore
+            loadTasks();
+        }
+        
+        // Login user
+        function loginUser() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            if (!email || !password) {
+                showAlert('error', 'Please enter email and password');
+                return;
+            }
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    showAlert('success', 'Login successful!');
+                })
+                .catch(error => {
+                    showAlert('error', error.message);
+                });
+        }
+        
+        // Register user
+        function registerUser() {
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            
+            if (!name || !email || !password) {
+                showAlert('error', 'Please fill all fields');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showAlert('error', 'Password must be at least 6 characters');
+                return;
+            }
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    // Update user profile with name
+                    return userCredential.user.updateProfile({
+                        displayName: name
+                    });
+                })
+                .then(() => {
+                    showAlert('success', 'Account created successfully!');
+                    // Switch to login tab
+                    loginTab.click();
+                })
+                .catch(error => {
+                    showAlert('error', error.message);
+                });
+        }
+        
+        // Logout user
+        function logoutUser() {
+            auth.signOut()
+                .then(() => {
+                    showAlert('success', 'Logged out successfully');
+                })
+                .catch(error => {
+                    showAlert('error', error.message);
+                });
+        }
+        
+        // Load tasks from Firestore
+        function loadTasks() {
+            // Remove existing listener if any
+            if (tasksListener) {
+                tasksListener();
+            }
+            
+            // Set up real-time listener for tasks
+            tasksListener = db.collection('tasks')
+                .where('public', '==', true)
+                .onSnapshot(snapshot => {
+                    tasks = [];
+                    snapshot.forEach(doc => {
+                        const task = doc.data();
+                        task.id = doc.id;
+                        tasks.push(task);
+                    });
+                    
+                    // Also get user's private tasks
+                    db.collection('tasks')
+                        .where('userId', '==', currentUser.uid)
+                        .where('public', '==', false)
+                        .get()
+                        .then(privateSnapshot => {
+                            privateSnapshot.forEach(doc => {
+                                const task = doc.data();
+                                task.id = doc.id;
+                                tasks.push(task);
+                            });
+                            
+                            renderTasks();
+                            updateStats();
+                        });
+                }, error => {
+                    showAlert('error', 'Error loading tasks: ' + error.message);
+                });
+        }
+        
+        // Save task to Firestore
+        function saveTask(e) {
+            e.preventDefault();
+            
+            // Get form values
+            const title = document.getElementById('task-title').value;
+            const description = document.getElementById('task-description').value;
+            const category = document.getElementById('task-category').value;
+            const priority = document.getElementById('task-priority').value;
+            const dueDate = document.getElementById('task-due-date').value;
+            const assigned = document.getElementById('task-assigned').value;
+            const isPublic = document.getElementById('task-public').checked;
+            
+            // Create task object
+            const task = {
+                title,
+                description,
+                category,
+                priority,
+                dueDate,
+                assigned: assigned || 'Unassigned',
+                status: 'pending',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                userId: currentUser.uid,
+                userName: currentUser.displayName || currentUser.email.split('@')[0],
+                public: isPublic
+            };
+            
+            if (editingTaskId) {
+                // Update existing task
+                db.collection('tasks').doc(editingTaskId).update(task)
+                    .then(() => {
+                        showAlert('success', 'Task updated successfully!');
+                    })
+                    .catch(error => {
+                        showAlert('error', 'Error updating task: ' + error.message);
+                    });
+            } else {
+                // Add new task
+                db.collection('tasks').add(task)
+                    .then(() => {
+                        showAlert('success', 'Task added successfully!');
+                    })
+                    .catch(error => {
+                        showAlert('error', 'Error adding task: ' + error.message);
+                    });
+            }
+            
+            // Reset form
+            maintenanceForm.reset();
+            document.getElementById('task-priority').value = 'medium';
+            priorityButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.priority === 'medium') {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Reset editing state
+            editingTaskId = null;
+            document.getElementById('save-task').innerHTML = '<i class="fas fa-save"></i> Save to Cloud';
+        }
+        
+        // Render tasks based on current filter
+        function renderTasks() {
+            // Clear container
+            tasksContainer.innerHTML = '';
+            
+            // Filter tasks
+            let filteredTasks = [...tasks];
+            
+            if (currentFilter === 'pending') {
+                filteredTasks = tasks.filter(task => task.status === 'pending');
+            } else if (currentFilter === 'completed') {
+                filteredTasks = tasks.filter(task => task.status === 'completed');
+            } else if (currentFilter === 'high') {
+                filteredTasks = tasks.filter(task => task.priority === 'high');
+            } else if (currentFilter === 'my') {
+                filteredTasks = tasks.filter(task => task.userId === currentUser.uid);
+            }
+            
+            // Sort tasks by priority (high to low) and then by due date
+            filteredTasks.sort((a, b) => {
+                const priorityOrder = { high: 3, medium: 2, low: 1 };
+                if (priorityOrder[b.priority] !== priorityOrder[a.priority]) {
+                    return priorityOrder[b.priority] - priorityOrder[a.priority];
+                }
+                
+                // If same priority, sort by due date (earliest first)
+                if (a.dueDate && b.dueDate) {
+                    return new Date(a.dueDate) - new Date(b.dueDate);
+                }
+                
+                return 0;
+            });
+            
+            // Show empty state if no tasks
+            if (filteredTasks.length === 0) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'empty-state';
+                emptyState.innerHTML = `
+                    <i class="fas fa-clipboard-list"></i>
+                    <h3>No maintenance tasks found</h3>
+                    <p>${currentFilter === 'all' ? 'Add your first maintenance task using the form on the left' : 'No tasks match the selected filter'}</p>
+                `;
+                tasksContainer.appendChild(emptyState);
+                return;
+            }
+            
+            // Render tasks
+            filteredTasks.forEach(task => {
+                const taskElement = createTaskElement(task);
+                tasksContainer.appendChild(taskElement);
+            });
+        }
+        
+        // Create a task element
+        function createTaskElement(task) {
+            const taskElement = document.createElement('div');
+            taskElement.className = `task-item ${task.status === 'completed' ? 'completed-task' : ''}`;
+            
+            // Format date for display
+            const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            }) : 'No due date';
+            
+            // Format category for display
+            const categoryDisplay = task.category.charAt(0).toUpperCase() + task.category.slice(1);
+            
+            // Priority class
+            const priorityClass = `priority-${task.priority}`;
+            
+            // Check if task belongs to current user
+            const isMyTask = task.userId === currentUser.uid;
+            
+            taskElement.innerHTML = `
+                <div class="task-header">
+                    <div>
+                        <div class="task-title">${task.title}</div>
+                        <div class="created-by">
+                            <i class="fas fa-user${task.public ? '-friends' : ''}"></i> 
+                            ${task.userName} ${task.public ? '(Public)' : '(Private)'}
+                        </div>
+                    </div>
+                    <div class="task-priority ${priorityClass}">${task.priority.toUpperCase()}</div>
+                </div>
+                <div class="task-description">${task.description || 'No description provided'}</div>
+                <div class="task-footer">
+                    <div>
+                        <div><i class="fas fa-tag"></i> ${categoryDisplay}</div>
+                        <div><i class="fas fa-calendar-day"></i> Due: ${dueDate}</div>
+                        <div><i class="fas fa-user"></i> ${task.assigned}</div>
+                    </div>
+                    <div class="task-actions">
+                        ${task.status === 'pending' ? 
+                            `<button class="action-btn complete" onclick="completeTask('${task.id}')" ${!isMyTask ? 'disabled style="opacity:0.5"' : ''}>
+                                <i class="fas fa-check"></i> Complete
+                            </button>` : 
+                            `<button class="action-btn complete" onclick="pendingTask('${task.id}')" ${!isMyTask ? 'disabled style="opacity:0.5"' : ''}>
+                                <i class="fas fa-undo"></i> Reopen
+                            </button>`
+                        }
+                        <button class="action-btn edit" onclick="editTask('${task.id}')" ${!isMyTask ? 'disabled style="opacity:0.5"' : ''}>
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="action-btn delete" onclick="deleteTask('${task.id}')" ${!isMyTask ? 'disabled style="opacity:0.5"' : ''}>
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return taskElement;
+        }
+        
+        // Complete a task
+        function completeTask(taskId) {
+            db.collection('tasks').doc(taskId).update({
+                status: 'completed',
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                showAlert('success', 'Task marked as completed!');
+            })
+            .catch(error => {
+                showAlert('error', 'Error completing task: ' + error.message);
+            });
+        }
+        
+        // Reopen a completed task
+        function pendingTask(taskId) {
+            db.collection('tasks').doc(taskId).update({
+                status: 'pending',
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                showAlert('success', 'Task reopened!');
+            })
+            .catch(error => {
+                showAlert('error', 'Error reopening task: ' + error.message);
+            });
+        }
+        
+        // Edit a task
+        function editTask(taskId) {
+            const task = tasks.find(task => task.id === taskId);
+            if (task) {
+                // Fill form with task data
+                document.getElementById('task-title').value = task.title;
+                document.getElementById('task-description').value = task.description;
+                document.getElementById('task-category').value = task.category;
+                document.getElementById('task-due-date').value = task.dueDate;
+                document.getElementById('task-assigned').value = task.assigned;
+                document.getElementById('task-public').checked = task.public;
+                
+                // Set priority buttons
+                priorityButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.priority === task.priority) {
+                        btn.classList.add('active');
+                    }
+                });
+                document.getElementById('task-priority').value = task.priority;
+                
+                // Change button text
+                document.getElementById('save-task').innerHTML = '<i class="fas fa-save"></i> Update Task';
+                
+                // Set editing state
+                editingTaskId = taskId;
+                
+                // Scroll to form
+                document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        // Delete a task
+        function deleteTask(taskId) {
+            if (confirm('Are you sure you want to delete this task?')) {
+                db.collection('tasks').doc(taskId).delete()
+                    .then(() => {
+                        showAlert('success', 'Task deleted successfully!');
+                    })
+                    .catch(error => {
+                        showAlert('error', 'Error deleting task: ' + error.message);
+                    });
+            }
+        }
+        
+        // Update statistics
+        function updateStats() {
+            const total = tasks.length;
+            const pending = tasks.filter(task => task.status === 'pending').length;
+            const completed = tasks.filter(task => task.status === 'completed').length;
+            const myTasks = tasks.filter(task => task.userId === currentUser.uid).length;
+            
+            totalTasksEl.textContent = total;
+            pendingTasksEl.textContent = pending;
+            completedTasksEl.textContent = completed;
+            myTasksEl.textContent = myTasks;
+        }
+        
+        // Demo mode - if Firebase config is not set up
+        function checkFirebaseConfig() {
+            if (firebaseConfig.apiKey === "AIzaSyC-Xk_RnhGWR19jFAG_hp1QgLJ7J0zBqfY") {
+                showAlert('error', '⚠️ Using demo mode. To enable real cloud storage, replace the Firebase configuration with your own.');
+                
+                // Enable demo mode with localStorage fallback
+                enableDemoMode();
+            }
+        }
+        
+        // Demo mode using localStorage
+        function enableDemoMode() {
+            // Override Firebase functions with localStorage
+            window.loginUser = function() {
+                const email = document.getElementById('login-email').value;
+                if (email) {
+                    currentUser = {
+                        uid: 'demo-user',
+                        email: email,
+                        displayName: email.split('@')[0]
+                    };
+                    showAlert('success', 'Demo login successful! (Using localStorage)');
+                    showMainApp();
+                } else {
+                    showAlert('error', 'Please enter an email for demo mode');
+                }
+            };
+            
+            window.registerUser = function() {
+                const name = document.getElementById('register-name').value;
+                const email = document.getElementById('register-email').value;
+                
+                if (name && email) {
+                    currentUser = {
+                        uid: 'demo-user',
+                        email: email,
+                        displayName: name
+                    };
+                    showAlert('success', 'Demo account created! (Using localStorage)');
+                    loginTab.click();
+                    document.getElementById('login-email').value = email;
+                } else {
+                    showAlert('error', 'Please fill all fields');
+                }
+            };
+            
+            // Override loadTasks
+            window.loadTasks = function() {
+                tasks = JSON.parse(localStorage.getItem('maintenanceTasks')) || [];
+                renderTasks();
+                updateStats();
+            };
+            
+            // Override saveTask
+            const originalSaveTask = window.saveTask;
+            window.saveTask = function(e) {
+                e.preventDefault();
+                
+                // Get form values
+                const title = document.getElementById('task-title').value;
+                const description = document.getElementById('task-description').value;
+                const category = document.getElementById('task-category').value;
+                const priority = document.getElementById('task-priority').value;
+                const dueDate = document.getElementById('task-due-date').value;
+                const assigned = document.getElementById('task-assigned').value;
+                const isPublic = document.getElementById('task-public').checked;
+                
+                // Create task object
+                const task = {
+                    id: editingTaskId || Date.now().toString(),
+                    title,
+                    description,
+                    category,
+                    priority,
+                    dueDate,
+                    assigned: assigned || 'Unassigned',
+                    status: 'pending',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    userId: currentUser.uid,
+                    userName: currentUser.displayName,
+                    public: isPublic
+                };
+                
+                if (editingTaskId) {
+                    // Update existing task
+                    const index = tasks.findIndex(t => t.id === editingTaskId);
+                    tasks[index] = task;
+                    showAlert('success', 'Task updated successfully! (Demo mode)');
+                } else {
+                    // Add new task
+                    tasks.push(task);
+                    showAlert('success', 'Task added successfully! (Demo mode)');
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('maintenanceTasks', JSON.stringify(tasks));
+                
+                // Reset form
+                maintenanceForm.reset();
+                document.getElementById('task-priority').value = 'medium';
+                priorityButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.priority === 'medium') {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Reset editing state
+                editingTaskId = null;
+                document.getElementById('save-task').innerHTML = '<i class="fas fa-save"></i> Save to Cloud';
+                
+                // Reload tasks
+                loadTasks();
+            };
+            
+            // Override task actions
+            window.completeTask = function(taskId) {
+                const index = tasks.findIndex(task => task.id === taskId);
+                if (index !== -1) {
+                    tasks[index].status = 'completed';
+                    tasks[index].updatedAt = new Date().toISOString();
+                    localStorage.setItem('maintenanceTasks', JSON.stringify(tasks));
+                    loadTasks();
+                    showAlert('success', 'Task marked as completed! (Demo mode)');
+                }
+            };
+            
+            window.pendingTask = function(taskId) {
+                const index = tasks.findIndex(task => task.id === taskId);
+                if (index !== -1) {
+                    tasks[index].status = 'pending';
+                    tasks[index].updatedAt = new Date().toISOString();
+                    localStorage.setItem('maintenanceTasks', JSON.stringify(tasks));
+                    loadTasks();
+                    showAlert('success', 'Task reopened! (Demo mode)');
+                }
+            };
+            
+            window.deleteTask = function(taskId) {
+                if (confirm('Are you sure you want to delete this task?')) {
+                    tasks = tasks.filter(task => task.id !== taskId);
+                    localStorage.setItem('maintenanceTasks', JSON.stringify(tasks));
+                    loadTasks();
+                    showAlert('success', 'Task deleted successfully! (Demo mode)');
+                }
+            };
+            
+            window.editTask = function(taskId) {
+                const task = tasks.find(task => task.id === taskId);
+                if (task) {
+                    // Fill form with task data
+                    document.getElementById('task-title').value = task.title;
+                    document.getElementById('task-description').value = task.description;
+                    document.getElementById('task-category').value = task.category;
+                    document.getElementById('task-due-date').value = task.dueDate;
+                    document.getElementById('task-assigned').value = task.assigned;
+                    document.getElementById('task-public').checked = task.public;
+                    
+                    // Set priority buttons
+                    priorityButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.dataset.priority === task.priority) {
+                            btn.classList.add('active');
+                        }
+                    });
+                    document.getElementById('task-priority').value = task.priority;
+                    
+                    // Change button text
+                    document.getElementById('save-task').innerHTML = '<i class="fas fa-save"></i> Update Task';
+                    
+                    // Set editing state
+                    editingTaskId = taskId;
+                    
+                    // Scroll to form
+                    document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+                }
+            };
+            
+            // Add some demo tasks if none exist
+            if (!localStorage.getItem('maintenanceTasks')) {
+                const demoTasks = [
+                    {
+                        id: '1',
+                        title: 'Replace HVAC filters',
+                        description: 'Replace all air filters in the building HVAC system',
+                        category: 'hvac',
+                        priority: 'medium',
+                        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        assigned: 'Maintenance Team',
+                        status: 'pending',
+                        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                        userId: 'demo-user',
+                        userName: 'Demo User',
+                        public: true
+                    },
+                    {
+                        id: '2',
+                        title: 'Fix leaking faucet in restroom',
+                        description: 'Second floor men\'s restroom faucet is leaking',
+                        category: 'plumbing',
+                        priority: 'high',
+                        dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        assigned: 'John Smith',
+                        status: 'pending',
+                        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+                        userId: 'demo-user',
+                        userName: 'Demo User',
+                        public: true
+                    },
+                    {
+                        id: '3',
+                        title: 'Inspect fire extinguishers',
+                        description: 'Monthly inspection of all fire extinguishers on premises',
+                        category: 'safety',
+                        priority: 'high',
+                        dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        assigned: 'Safety Officer',
+                        status: 'completed',
+                        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+                        userId: 'demo-user-2',
+                        userName: 'Another User',
+                        public: true
+                    }
+                ];
+                
+                localStorage.setItem('maintenanceTasks', JSON.stringify(demoTasks));
+            }
+        }
+        
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            init();
+            checkFirebaseConfig();
+        });
     </script>
 </body>
 </html>
