@@ -1,15 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maintenance Management - Cloud Storage</title>
+    <title>Tableau de Bord des Absences Mensuelles</title>
+    
+    <!-- Feuilles de style -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js pour les diagrammes -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SheetJS pour l'export Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    
     <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -21,167 +42,271 @@
             background-color: #f5f7fa;
             color: #333;
             line-height: 1.6;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
             padding: 20px;
         }
         
-        header {
-            background: linear-gradient(135deg, #2c3e50, #1a2530);
-            color: white;
-            padding: 25px 0;
-            border-radius: 10px 10px 0 0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
         }
         
-        .header-content {
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
         }
         
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 5px;
-        }
-        
-        .subtitle {
-            font-size: 1.1rem;
-            opacity: 0.8;
-        }
-        
-        .user-info {
+        .logo {
             display: flex;
             align-items: center;
             gap: 15px;
         }
         
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #3498db;
+        .logo i {
+            font-size: 2.5rem;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        
+        .dashboard-controls {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-        
-        .auth-section {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        
-        .auth-form {
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        
-        .auth-form h2 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-        }
-        
-        .auth-tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .auth-tab {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
-        }
-        
-        .auth-tab.active {
-            border-bottom-color: #3498db;
-            color: #3498db;
-            font-weight: bold;
-        }
-        
-        .auth-input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 1rem;
+            gap: 15px;
         }
         
         .btn {
-            padding: 14px 25px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 6px;
+            border-radius: var(--border-radius);
             cursor: pointer;
-            font-size: 1rem;
             font-weight: 600;
-            transition: all 0.3s;
-            display: inline-flex;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
+            gap: 10px;
         }
         
         .btn-primary {
-            background-color: #3498db;
+            background-color: var(--secondary-color);
             color: white;
-            width: 100%;
-        }
-        
-        .btn-primary:hover {
-            background-color: #2980b9;
-        }
-        
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background-color: #5a6268;
         }
         
         .btn-success {
-            background-color: #28a745;
+            background-color: var(--success-color);
             color: white;
         }
         
-        .btn-success:hover {
-            background-color: #218838;
+        .btn-danger {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .stat-icon.absences {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--accent-color);
+        }
+        
+        .stat-icon.employees {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--secondary-color);
+        }
+        
+        .stat-icon.month {
+            background-color: rgba(155, 89, 182, 0.1);
+            color: #9b59b6;
+        }
+        
+        .stat-icon.rate {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--success-color);
         }
         
         .main-content {
-            display: none;
-            grid-template-columns: 1fr 2fr;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 30px;
+            margin-bottom: 30px;
         }
         
-        .form-section {
+        @media (max-width: 1100px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
             background-color: white;
+            border-radius: var(--border-radius);
             padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            height: fit-content;
+            box-shadow: var(--shadow);
         }
         
-        .form-section h2 {
-            color: #2c3e50;
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #3498db;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .card-title {
+            font-size: 1.4rem;
+            color: var(--primary-color);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .badge-high {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--accent-color);
+        }
+        
+        .badge-medium {
+            background-color: rgba(241, 196, 15, 0.1);
+            color: #f1c40f;
+        }
+        
+        .badge-low {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--success-color);
+        }
+        
+        .chart-container {
+            height: 350px;
+            position: relative;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #7f8c8d;
         }
         
         .form-group {
@@ -192,1262 +317,628 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--primary-color);
         }
         
-        input, select, textarea {
+        input, select {
             width: 100%;
-            padding: 12px;
+            padding: 12px 15px;
             border: 1px solid #ddd;
-            border-radius: 6px;
+            border-radius: var(--border-radius);
             font-size: 1rem;
-            transition: border 0.3s;
         }
         
-        input:focus, select:focus, textarea:focus {
-            border-color: #3498db;
-            outline: none;
-        }
-        
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-        
-        .priority-options {
+        .form-actions {
             display: flex;
-            gap: 10px;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
         }
         
-        .priority-btn {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background-color: #f8f9fa;
-            cursor: pointer;
+        footer {
             text-align: center;
-            transition: all 0.2s;
+            margin-top: 30px;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
         }
         
-        .priority-btn.active {
-            font-weight: bold;
+        .firebase-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
         }
         
-        .priority-btn.low.active {
-            background-color: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
+        .firebase-status .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ccc;
         }
         
-        .priority-btn.medium.active {
-            background-color: #fff3cd;
-            border-color: #ffeaa7;
-            color: #856404;
+        .firebase-status .dot.connected {
+            background-color: var(--success-color);
         }
         
-        .priority-btn.high.active {
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
-            color: #721c24;
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--secondary-color);
         }
         
-        .tasks-section {
-            background-color: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: 15px;
         }
         
-        .tasks-section h2 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #3498db;
-        }
-        
-        .filters {
+        .export-options {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-top: 20px;
             flex-wrap: wrap;
         }
         
-        .filter-btn {
-            padding: 8px 15px;
+        .export-btn {
+            background-color: #f8f9fa;
             border: 1px solid #ddd;
-            border-radius: 6px;
-            background-color: #f8f9fa;
-            cursor: pointer;
-            transition: all 0.2s;
+            color: var(--primary-color);
         }
         
-        .filter-btn.active {
-            background-color: #3498db;
-            color: white;
-            border-color: #3498db;
-        }
-        
-        .tasks-list {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        
-        .task-item {
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border-left: 5px solid #ddd;
-            background-color: #f8f9fa;
-            transition: all 0.3s;
-        }
-        
-        .task-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .task-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 10px;
-        }
-        
-        .task-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-        
-        .task-priority {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-        
-        .priority-low {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .priority-medium {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        
-        .priority-high {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        
-        .task-description {
-            margin-bottom: 15px;
-            color: #555;
-        }
-        
-        .task-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-            color: #666;
-        }
-        
-        .task-actions {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .action-btn {
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-            border: 1px solid #ddd;
-            background-color: white;
-        }
-        
-        .action-btn.complete {
-            color: #28a745;
-            border-color: #28a745;
-        }
-        
-        .action-btn.complete:hover {
-            background-color: #28a745;
-            color: white;
-        }
-        
-        .action-btn.edit {
-            color: #007bff;
-            border-color: #007bff;
-        }
-        
-        .action-btn.edit:hover {
-            background-color: #007bff;
-            color: white;
-        }
-        
-        .action-btn.delete {
-            color: #dc3545;
-            border-color: #dc3545;
-        }
-        
-        .action-btn.delete:hover {
-            background-color: #dc3545;
-            color: white;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #666;
-        }
-        
-        .empty-state i {
-            font-size: 3rem;
-            color: #ddd;
-            margin-bottom: 15px;
-        }
-        
-        .completed-task {
-            opacity: 0.8;
-            border-left-color: #28a745;
-        }
-        
-        .completed-task .task-title {
-            text-decoration: line-through;
-        }
-        
-        .created-by {
-            font-size: 0.8rem;
-            color: #888;
-            margin-top: 5px;
-        }
-        
-        .storage-info {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: #666;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-            border: 1px dashed #ddd;
-        }
-        
-        .alert {
-            padding: 12px 20px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .alert-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .stats-container {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .stat-box {
-            background-color: white;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            flex: 1;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-        
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            font-size: 0.9rem;
-            color: #666;
-        }
-        
-        @media (max-width: 992px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .header-content {
-                flex-direction: column;
-                text-align: center;
-                gap: 20px;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .filters {
-                justify-content: center;
-            }
-            
-            .task-footer {
-                flex-direction: column;
-                gap: 10px;
-                align-items: flex-start;
-            }
-            
-            .task-actions {
-                width: 100%;
-                justify-content: flex-end;
-            }
-            
-            .stats-container {
-                flex-direction: column;
-            }
+        .export-btn:hover {
+            background-color: #e9ecef;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-calendar-times"></i>
                 <div>
-                    <h1><i class="fas fa-tools"></i> Maintenance Management</h1>
-                    <p class="subtitle">Public cloud storage with real-time updates</p>
+                    <h1>Tableau de Bord des Absences</h1>
+                    <p class="subtitle">Suivi mensuel et analyse des absences du personnel</p>
                 </div>
-                <div class="user-info" id="user-info" style="display: none;">
-                    <div class="user-avatar" id="user-avatar">U</div>
-                    <div>
-                        <div id="user-name">User</div>
-                        <button class="btn btn-secondary" id="logout-btn" style="padding: 5px 10px; font-size: 0.8rem;">Logout</button>
-                    </div>
-                </div>
+            </div>
+            <div class="dashboard-controls">
+                <button class="btn btn-primary" id="addAbsenceBtn">
+                    <i class="fas fa-plus-circle"></i> Ajouter une absence
+                </button>
+                <button class="btn btn-success" id="exportBtn">
+                    <i class="fas fa-file-excel"></i> Exporter en Excel
+                </button>
             </div>
         </header>
         
-        <!-- Authentication Section -->
-        <section class="auth-section" id="auth-section">
-            <div class="auth-form">
-                <h2>Maintenance Cloud System</h2>
-                <div class="auth-tabs">
-                    <div class="auth-tab active" id="login-tab">Login</div>
-                    <div class="auth-tab" id="register-tab">Register</div>
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon absences">
+                    <i class="fas fa-user-times fa-2x"></i>
                 </div>
-                
-                <div id="login-form">
-                    <input type="email" id="login-email" class="auth-input" placeholder="Email" required>
-                    <input type="password" id="login-password" class="auth-input" placeholder="Password" required>
-                    <button class="btn btn-primary" id="login-btn">Login</button>
-                </div>
-                
-                <div id="register-form" style="display: none;">
-                    <input type="text" id="register-name" class="auth-input" placeholder="Full Name" required>
-                    <input type="email" id="register-email" class="auth-input" placeholder="Email" required>
-                    <input type="password" id="register-password" class="auth-input" placeholder="Password (min. 6 characters)" required>
-                    <button class="btn btn-success" id="register-btn">Create Account</button>
-                </div>
-                
-                <div class="storage-info">
-                    <i class="fas fa-cloud"></i> Data is stored in the cloud and accessible from any device
-                </div>
+                <div class="stat-value" id="totalAbsences">0</div>
+                <div class="stat-label">Total des absences ce mois</div>
             </div>
-        </section>
+            
+            <div class="stat-card">
+                <div class="stat-icon employees">
+                    <i class="fas fa-users fa-2x"></i>
+                </div>
+                <div class="stat-value" id="totalEmployees">0</div>
+                <div class="stat-label">Employés suivis</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon month">
+                    <i class="fas fa-calendar-alt fa-2x"></i>
+                </div>
+                <div class="stat-value" id="currentMonth">Mai</div>
+                <div class="stat-label">Mois en cours</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon rate">
+                    <i class="fas fa-chart-line fa-2x"></i>
+                </div>
+                <div class="stat-value" id="absenceRate">0%</div>
+                <div class="stat-label">Taux d'absence</div>
+            </div>
+        </div>
         
-        <!-- Main Content (shown after login) -->
-        <div class="main-content" id="main-content">
-            <!-- Alert messages -->
-            <div class="alert alert-success" id="success-alert">
-                <i class="fas fa-check-circle"></i> <span id="success-message"></span>
+        <div class="main-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Absences par employé</h2>
+                    <div class="export-options">
+                        <button class="btn export-btn" id="exportTableBtn">
+                            <i class="fas fa-download"></i> Tableau
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table id="absencesTable">
+                        <thead>
+                            <tr>
+                                <th>Employé</th>
+                                <th>Département</th>
+                                <th>Jours d'absence</th>
+                                <th>Taux</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="absencesTableBody">
+                            <!-- Les données seront insérées ici dynamiquement -->
+                            <tr>
+                                <td colspan="5" class="loading">
+                                    <i class="fas fa-spinner fa-spin"></i><br>
+                                    Chargement des données...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
             
-            <div class="alert alert-error" id="error-alert">
-                <i class="fas fa-exclamation-circle"></i> <span id="error-message"></span>
-            </div>
-            
-            <!-- Stats -->
-            <div class="stats-container">
-                <div class="stat-box">
-                    <div class="stat-value" id="total-tasks">0</div>
-                    <div class="stat-label">Total Tasks</div>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Diagramme des absences par mois</h2>
+                    <div class="export-options">
+                        <button class="btn export-btn" id="exportChartBtn">
+                            <i class="fas fa-download"></i> Diagramme
+                        </button>
+                    </div>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="pending-tasks">0</div>
-                    <div class="stat-label">Pending</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="completed-tasks">0</div>
-                    <div class="stat-label">Completed</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="my-tasks">0</div>
-                    <div class="stat-label">My Tasks</div>
+                <div class="chart-container">
+                    <canvas id="absencesChart"></canvas>
                 </div>
             </div>
-            
-            <section class="form-section">
-                <h2><i class="fas fa-plus-circle"></i> Add New Maintenance Task</h2>
-                <form id="maintenance-form">
+        </div>
+        
+        <!-- Modal pour ajouter une absence -->
+        <div class="modal" id="addAbsenceModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Ajouter une absence</h3>
+                    <button class="close-btn" id="closeModalBtn">&times;</button>
+                </div>
+                <form id="absenceForm">
                     <div class="form-group">
-                        <label for="task-title">Task Title</label>
-                        <input type="text" id="task-title" placeholder="Enter task title" required>
+                        <label for="employeeName">Nom de l'employé</label>
+                        <input type="text" id="employeeName" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="task-description">Description</label>
-                        <textarea id="task-description" placeholder="Describe the maintenance task..."></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="task-category">Category</label>
-                        <select id="task-category">
-                            <option value="electrical">Electrical</option>
-                            <option value="plumbing">Plumbing</option>
-                            <option value="mechanical">Mechanical</option>
-                            <option value="hvac">HVAC</option>
-                            <option value="general">General Maintenance</option>
-                            <option value="safety">Safety Equipment</option>
+                        <label for="employeeDepartment">Département</label>
+                        <select id="employeeDepartment" required>
+                            <option value="">Sélectionner un département</option>
+                            <option value="Ressources Humaines">Ressources Humaines</option>
+                            <option value="Informatique">Informatique</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Finances">Finances</option>
+                            <option value="Production">Production</option>
+                            <option value="Ventes">Ventes</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label>Priority</label>
-                        <div class="priority-options">
-                            <div class="priority-btn low" data-priority="low">Low</div>
-                            <div class="priority-btn medium active" data-priority="medium">Medium</div>
-                            <div class="priority-btn high" data-priority="high">High</div>
-                        </div>
-                        <input type="hidden" id="task-priority" value="medium">
+                        <label for="absenceDate">Date de l'absence</label>
+                        <input type="date" id="absenceDate" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="task-due-date">Due Date</label>
-                        <input type="date" id="task-due-date">
+                        <label for="absenceDays">Nombre de jours</label>
+                        <input type="number" id="absenceDays" min="0.5" max="30" step="0.5" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="task-assigned">Assigned To</label>
-                        <input type="text" id="task-assigned" placeholder="Enter name or department">
+                        <label for="absenceReason">Motif</label>
+                        <select id="absenceReason" required>
+                            <option value="">Sélectionner un motif</option>
+                            <option value="Maladie">Maladie</option>
+                            <option value="Congé payé">Congé payé</option>
+                            <option value="Formation">Formation</option>
+                            <option value="Personnel">Personnel</option>
+                            <option value="Autre">Autre</option>
+                        </select>
                     </div>
                     
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="task-public"> Make this task visible to all users
-                        </label>
+                    <div class="form-actions">
+                        <button type="button" class="btn" id="cancelBtn">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer l'absence</button>
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary" id="save-task">
-                        <i class="fas fa-save"></i> Save to Cloud
-                    </button>
                 </form>
-                
-                <div class="storage-info">
-                    <i class="fas fa-cloud"></i> Connected to Firebase Cloud Firestore
-                </div>
-            </section>
-            
-            <section class="tasks-section">
-                <h2><i class="fas fa-tasks"></i> Maintenance Tasks</h2>
-                
-                <div class="filters">
-                    <div class="filter-btn active" data-filter="all">All Tasks</div>
-                    <div class="filter-btn" data-filter="pending">Pending</div>
-                    <div class="filter-btn" data-filter="completed">Completed</div>
-                    <div class="filter-btn" data-filter="my">My Tasks</div>
-                    <div class="filter-btn" data-filter="high">High Priority</div>
-                </div>
-                
-                <div class="tasks-list" id="tasks-container">
-                    <!-- Tasks will be loaded here -->
-                    <div class="empty-state">
-                        <i class="fas fa-clipboard-list"></i>
-                        <h3>No maintenance tasks yet</h3>
-                        <p>Add your first maintenance task using the form on the left</p>
-                    </div>
-                </div>
-            </section>
+            </div>
         </div>
+        
+        <footer>
+            <p>Système de gestion des absences mensuelles &copy; 2023</p>
+            <div class="firebase-status">
+                <div class="dot" id="firebaseStatusDot"></div>
+                <span id="firebaseStatusText">Connexion à Firebase...</span>
+            </div>
+        </footer>
     </div>
 
     <script>
-        // Firebase Configuration
-        // Replace with your own Firebase configuration
+        // Configuration Firebase
         const firebaseConfig = {
-             apiKey: "AIzaSyDVibHugZ_t9nRqw5hUIGk5rLyI94eoNYI",
-  authDomain: "final-e12f9.firebaseapp.com",
-  projectId: "final-e12f9",
-  storageBucket: "final-e12f9.firebasestorage.app",
-  messagingSenderId: "403146665818",
-  appId: "1:403146665818:web:6cbbccda9ba9bdc94b4d63"
+            apiKey: "AIzaSyB2COjVbQ2Cc4y8c3uoztb-hkAZuUREnBo",
+  authDomain: "mohamedhamada-dc8ed.firebaseapp.com",
+  projectId: "mohamedhamada-dc8ed",
+  storageBucket: "mohamedhamada-dc8ed.firebasestorage.app",
+  messagingSenderId: "356832485630",
+  appId: "1:356832485630:web:b9de8c9c1d8dcb760705af",
+  measurementId: "G-RN4VFXMCGB"
         };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
+        // Initialiser Firebase
+        let db;
+        let storage;
+        let absencesChart;
         
-        // DOM Elements
-        const authSection = document.getElementById('auth-section');
-        const mainContent = document.getElementById('main-content');
-        const userInfo = document.getElementById('user-info');
-        const userName = document.getElementById('user-name');
-        const userAvatar = document.getElementById('user-avatar');
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
-        const loginTab = document.getElementById('login-tab');
-        const registerTab = document.getElementById('register-tab');
-        const loginBtn = document.getElementById('login-btn');
-        const registerBtn = document.getElementById('register-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const maintenanceForm = document.getElementById('maintenance-form');
-        const tasksContainer = document.getElementById('tasks-container');
-        const filterButtons = document.querySelectorAll('.filter-btn');
-        const priorityButtons = document.querySelectorAll('.priority-btn');
-        const successAlert = document.getElementById('success-alert');
-        const errorAlert = document.getElementById('error-alert');
-        const successMessage = document.getElementById('success-message');
-        const errorMessage = document.getElementById('error-message');
-        
-        // Stats elements
-        const totalTasksEl = document.getElementById('total-tasks');
-        const pendingTasksEl = document.getElementById('pending-tasks');
-        const completedTasksEl = document.getElementById('completed-tasks');
-        const myTasksEl = document.getElementById('my-tasks');
-        
-        // Current state
-        let tasks = [];
-        let currentFilter = 'all';
-        let editingTaskId = null;
-        let currentUser = null;
-        let tasksListener = null;
-        
-        // Show alert function
-        function showAlert(type, message) {
-            if (type === 'success') {
-                successMessage.textContent = message;
-                successAlert.style.display = 'block';
-                errorAlert.style.display = 'none';
-                
-                setTimeout(() => {
-                    successAlert.style.display = 'none';
-                }, 3000);
-            } else {
-                errorMessage.textContent = message;
-                errorAlert.style.display = 'block';
-                successAlert.style.display = 'none';
-                
-                setTimeout(() => {
-                    errorAlert.style.display = 'none';
-                }, 5000);
-            }
+        try {
+            // Initialiser Firebase avec la configuration
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            storage = firebase.storage();
+            
+            // Mettre à jour le statut de connexion
+            document.getElementById('firebaseStatusDot').classList.add('connected');
+            document.getElementById('firebaseStatusText').textContent = 'Connecté à Firebase (mode démo)';
+            console.log("Firebase initialisé en mode démo");
+        } catch (error) {
+            console.error("Erreur d'initialisation Firebase:", error);
+            document.getElementById('firebaseStatusText').textContent = 'Mode démo (Firebase non configuré)';
+            document.getElementById('firebaseStatusText').style.color = '#f39c12';
         }
         
-        // Initialize the app
-        function init() {
-            // Check if user is already logged in
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    // User is signed in
-                    currentUser = user;
-                    showMainApp();
-                } else {
-                    // No user is signed in
-                    showAuth();
+        // Données de démo (à utiliser si Firebase n'est pas configuré)
+        const demoData = {
+            employees: [
+                { id: 1, name: "Marie Martin", department: "Ressources Humaines", absences: 3 },
+                { id: 2, name: "Jean Dupont", department: "Informatique", absences: 2 },
+                { id: 3, name: "Sophie Bernard", department: "Marketing", absences: 5 },
+                { id: 4, name: "Pierre Leroy", department: "Finances", absences: 1 },
+                { id: 5, name: "Julie Petit", department: "Production", absences: 4 },
+                { id: 6, name: "Thomas Moreau", department: "Ventes", absences: 2 }
+            ],
+            monthlyData: [
+                { month: "Janvier", absences: 12 },
+                { month: "Février", absences: 8 },
+                { month: "Mars", absences: 15 },
+                { month: "Avril", absences: 10 },
+                { month: "Mai", absences: 18 },
+                { month: "Juin", absences: 9 }
+            ]
+        };
+        
+        // Initialiser l'application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialiser les données
+            loadAbsenceData();
+            
+            // Initialiser le graphique
+            initChart();
+            
+            // Mettre à jour le mois actuel
+            const months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+            const currentMonth = new Date().getMonth();
+            document.getElementById('currentMonth').textContent = months[currentMonth];
+            
+            // Gestionnaires d'événements
+            document.getElementById('addAbsenceBtn').addEventListener('click', openAddAbsenceModal);
+            document.getElementById('closeModalBtn').addEventListener('click', closeAddAbsenceModal);
+            document.getElementById('cancelBtn').addEventListener('click', closeAddAbsenceModal);
+            document.getElementById('absenceForm').addEventListener('submit', addAbsence);
+            document.getElementById('exportBtn').addEventListener('click', exportToExcel);
+            document.getElementById('exportTableBtn').addEventListener('click', exportTableToExcel);
+            document.getElementById('exportChartBtn').addEventListener('click', exportChartImage);
+            
+            // Définir la date d'aujourd'hui comme date par défaut
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('absenceDate').value = today;
+            
+            // Fermer la modal en cliquant en dehors
+            document.getElementById('addAbsenceModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeAddAbsenceModal();
                 }
             });
+        });
+        
+        // Charger les données d'absence
+        function loadAbsenceData() {
+            // Si Firebase est configuré, charger depuis Firestore
+            if (db) {
+                loadFromFirestore();
+            } else {
+                // Sinon, utiliser les données de démo
+                useDemoData();
+            }
+        }
+        
+        // Charger les données depuis Firestore
+        async function loadFromFirestore() {
+            try {
+                console.log("Chargement des données depuis Firestore...");
+                // Cette partie nécessite une configuration Firebase réelle
+                // Pour la démo, nous utilisons les données de démo
+                useDemoData();
+            } catch (error) {
+                console.error("Erreur lors du chargement depuis Firestore:", error);
+                useDemoData();
+            }
+        }
+        
+        // Utiliser les données de démo
+        function useDemoData() {
+            console.log("Utilisation des données de démo");
             
-            // Set minimum date to today
+            // Mettre à jour les statistiques
+            const totalAbsences = demoData.employees.reduce((sum, emp) => sum + emp.absences, 0);
+            const totalEmployees = demoData.employees.length;
+            const absenceRate = ((totalAbsences / (totalEmployees * 22)) * 100).toFixed(1); // 22 jours de travail moyen par mois
+            
+            document.getElementById('totalAbsences').textContent = totalAbsences;
+            document.getElementById('totalEmployees').textContent = totalEmployees;
+            document.getElementById('absenceRate').textContent = `${absenceRate}%`;
+            
+            // Mettre à jour le tableau
+            updateAbsencesTable(demoData.employees);
+            
+            // Mettre à jour le graphique
+            updateChart(demoData.monthlyData);
+        }
+        
+        // Mettre à jour le tableau des absences
+        function updateAbsencesTable(employees) {
+            const tableBody = document.getElementById('absencesTableBody');
+            tableBody.innerHTML = '';
+            
+            employees.forEach(employee => {
+                const absenceRate = ((employee.absences / 22) * 100).toFixed(1); // 22 jours de travail moyen par mois
+                
+                let badgeClass = 'badge-low';
+                if (employee.absences > 4) {
+                    badgeClass = 'badge-high';
+                } else if (employee.absences > 2) {
+                    badgeClass = 'badge-medium';
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${employee.name}</td>
+                    <td>${employee.department}</td>
+                    <td>${employee.absences}</td>
+                    <td>${absenceRate}%</td>
+                    <td><span class="badge ${badgeClass}">${employee.absences > 4 ? 'Élevé' : employee.absences > 2 ? 'Moyen' : 'Faible'}</span></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Initialiser le graphique
+        function initChart() {
+            const ctx = document.getElementById('absencesChart').getContext('2d');
+            
+            absencesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Nombre d\'absences',
+                        data: [],
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Nombre d\'absences'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Mois'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Absences: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Mettre à jour le graphique
+        function updateChart(monthlyData) {
+            absencesChart.data.labels = monthlyData.map(item => item.month);
+            absencesChart.data.datasets[0].data = monthlyData.map(item => item.absences);
+            absencesChart.update();
+        }
+        
+        // Ouvrir la modal d'ajout d'absence
+        function openAddAbsenceModal() {
+            document.getElementById('addAbsenceModal').style.display = 'flex';
+        }
+        
+        // Fermer la modal d'ajout d'absence
+        function closeAddAbsenceModal() {
+            document.getElementById('addAbsenceModal').style.display = 'none';
+            document.getElementById('absenceForm').reset();
+            
+            // Réinitialiser la date à aujourd'hui
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('task-due-date').min = today;
-            
-            // Event listeners for auth tabs
-            loginTab.addEventListener('click', () => {
-                loginTab.classList.add('active');
-                registerTab.classList.remove('active');
-                loginForm.style.display = 'block';
-                registerForm.style.display = 'none';
-            });
-            
-            registerTab.addEventListener('click', () => {
-                registerTab.classList.add('active');
-                loginTab.classList.remove('active');
-                registerForm.style.display = 'block';
-                loginForm.style.display = 'none';
-            });
-            
-            // Login button
-            loginBtn.addEventListener('click', loginUser);
-            
-            // Register button
-            registerBtn.addEventListener('click', registerUser);
-            
-            // Logout button
-            logoutBtn.addEventListener('click', logoutUser);
-            
-            // Priority button selection
-            priorityButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    priorityButtons.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                    document.getElementById('task-priority').value = this.dataset.priority;
-                });
-            });
-            
-            // Filter button click handlers
-            filterButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                    currentFilter = this.dataset.filter;
-                    renderTasks();
-                });
-            });
-            
-            // Form submission
-            maintenanceForm.addEventListener('submit', saveTask);
+            document.getElementById('absenceDate').value = today;
         }
         
-        // Show authentication screen
-        function showAuth() {
-            authSection.style.display = 'block';
-            mainContent.style.display = 'none';
-            userInfo.style.display = 'none';
-            
-            // Clear forms
-            document.getElementById('login-email').value = '';
-            document.getElementById('login-password').value = '';
-            document.getElementById('register-name').value = '';
-            document.getElementById('register-email').value = '';
-            document.getElementById('register-password').value = '';
-        }
-        
-        // Show main application
-        function showMainApp() {
-            authSection.style.display = 'none';
-            mainContent.style.display = 'grid';
-            userInfo.style.display = 'flex';
-            
-            // Set user info
-            userName.textContent = currentUser.displayName || currentUser.email.split('@')[0];
-            userAvatar.textContent = (currentUser.displayName || currentUser.email[0]).toUpperCase();
-            
-            // Load tasks from Firestore
-            loadTasks();
-        }
-        
-        // Login user
-        function loginUser() {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            
-            if (!email || !password) {
-                showAlert('error', 'Please enter email and password');
-                return;
-            }
-            
-            auth.signInWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    showAlert('success', 'Login successful!');
-                })
-                .catch(error => {
-                    showAlert('error', error.message);
-                });
-        }
-        
-        // Register user
-        function registerUser() {
-            const name = document.getElementById('register-name').value;
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
-            
-            if (!name || !email || !password) {
-                showAlert('error', 'Please fill all fields');
-                return;
-            }
-            
-            if (password.length < 6) {
-                showAlert('error', 'Password must be at least 6 characters');
-                return;
-            }
-            
-            auth.createUserWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    // Update user profile with name
-                    return userCredential.user.updateProfile({
-                        displayName: name
-                    });
-                })
-                .then(() => {
-                    showAlert('success', 'Account created successfully!');
-                    // Switch to login tab
-                    loginTab.click();
-                })
-                .catch(error => {
-                    showAlert('error', error.message);
-                });
-        }
-        
-        // Logout user
-        function logoutUser() {
-            auth.signOut()
-                .then(() => {
-                    showAlert('success', 'Logged out successfully');
-                })
-                .catch(error => {
-                    showAlert('error', error.message);
-                });
-        }
-        
-        // Load tasks from Firestore
-        function loadTasks() {
-            // Remove existing listener if any
-            if (tasksListener) {
-                tasksListener();
-            }
-            
-            // Set up real-time listener for tasks
-            tasksListener = db.collection('tasks')
-                .where('public', '==', true)
-                .onSnapshot(snapshot => {
-                    tasks = [];
-                    snapshot.forEach(doc => {
-                        const task = doc.data();
-                        task.id = doc.id;
-                        tasks.push(task);
-                    });
-                    
-                    // Also get user's private tasks
-                    db.collection('tasks')
-                        .where('userId', '==', currentUser.uid)
-                        .where('public', '==', false)
-                        .get()
-                        .then(privateSnapshot => {
-                            privateSnapshot.forEach(doc => {
-                                const task = doc.data();
-                                task.id = doc.id;
-                                tasks.push(task);
-                            });
-                            
-                            renderTasks();
-                            updateStats();
-                        });
-                }, error => {
-                    showAlert('error', 'Error loading tasks: ' + error.message);
-                });
-        }
-        
-        // Save task to Firestore
-        function saveTask(e) {
+        // Ajouter une absence
+        function addAbsence(e) {
             e.preventDefault();
             
-            // Get form values
-            const title = document.getElementById('task-title').value;
-            const description = document.getElementById('task-description').value;
-            const category = document.getElementById('task-category').value;
-            const priority = document.getElementById('task-priority').value;
-            const dueDate = document.getElementById('task-due-date').value;
-            const assigned = document.getElementById('task-assigned').value;
-            const isPublic = document.getElementById('task-public').checked;
+            const employeeName = document.getElementById('employeeName').value;
+            const employeeDepartment = document.getElementById('employeeDepartment').value;
+            const absenceDate = document.getElementById('absenceDate').value;
+            const absenceDays = parseFloat(document.getElementById('absenceDays').value);
+            const absenceReason = document.getElementById('absenceReason').value;
             
-            // Create task object
-            const task = {
-                title,
-                description,
-                category,
-                priority,
-                dueDate,
-                assigned: assigned || 'Unassigned',
-                status: 'pending',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                userId: currentUser.uid,
-                userName: currentUser.displayName || currentUser.email.split('@')[0],
-                public: isPublic
+            // Simuler l'ajout à Firebase
+            console.log("Ajout d'absence:", {
+                employeeName,
+                employeeDepartment,
+                absenceDate,
+                absenceDays,
+                absenceReason
+            });
+            
+            // Dans une vraie application, on enverrait ces données à Firebase
+            // Pour la démo, nous allons juste les ajouter aux données de démo
+            const newEmployee = {
+                id: demoData.employees.length + 1,
+                name: employeeName,
+                department: employeeDepartment,
+                absences: absenceDays
             };
             
-            if (editingTaskId) {
-                // Update existing task
-                db.collection('tasks').doc(editingTaskId).update(task)
-                    .then(() => {
-                        showAlert('success', 'Task updated successfully!');
+            demoData.employees.push(newEmployee);
+            
+            // Mettre à jour les données mensuelles (ajouter au mois actuel)
+            const currentMonth = new Date().getMonth();
+            const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+            const currentMonthName = monthNames[currentMonth];
+            
+            const monthIndex = demoData.monthlyData.findIndex(item => item.month === currentMonthName);
+            if (monthIndex !== -1) {
+                demoData.monthlyData[monthIndex].absences += absenceDays;
+            }
+            
+            // Mettre à jour l'interface
+            loadAbsenceData();
+            
+            // Fermer la modal
+            closeAddAbsenceModal();
+            
+            // Afficher un message de confirmation
+            alert(`Absence de ${employeeName} enregistrée avec succès!`);
+        }
+        
+        // Exporter les données en Excel
+        function exportToExcel() {
+            try {
+                // Préparer les données pour l'export
+                const worksheetData = [
+                    ["Nom", "Département", "Jours d'absence", "Taux d'absence", "Statut"],
+                    ...demoData.employees.map(emp => {
+                        const absenceRate = ((emp.absences / 22) * 100).toFixed(1);
+                        const status = emp.absences > 4 ? 'Élevé' : emp.absences > 2 ? 'Moyen' : 'Faible';
+                        return [emp.name, emp.department, emp.absences, `${absenceRate}%`, status];
                     })
-                    .catch(error => {
-                        showAlert('error', 'Error updating task: ' + error.message);
-                    });
-            } else {
-                // Add new task
-                db.collection('tasks').add(task)
-                    .then(() => {
-                        showAlert('success', 'Task added successfully!');
-                    })
-                    .catch(error => {
-                        showAlert('error', 'Error adding task: ' + error.message);
-                    });
-            }
-            
-            // Reset form
-            maintenanceForm.reset();
-            document.getElementById('task-priority').value = 'medium';
-            priorityButtons.forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.priority === 'medium') {
-                    btn.classList.add('active');
-                }
-            });
-            
-            // Reset editing state
-            editingTaskId = null;
-            document.getElementById('save-task').innerHTML = '<i class="fas fa-save"></i> Save to Cloud';
-        }
-        
-        // Render tasks based on current filter
-        function renderTasks() {
-            // Clear container
-            tasksContainer.innerHTML = '';
-            
-            // Filter tasks
-            let filteredTasks = [...tasks];
-            
-            if (currentFilter === 'pending') {
-                filteredTasks = tasks.filter(task => task.status === 'pending');
-            } else if (currentFilter === 'completed') {
-                filteredTasks = tasks.filter(task => task.status === 'completed');
-            } else if (currentFilter === 'high') {
-                filteredTasks = tasks.filter(task => task.priority === 'high');
-            } else if (currentFilter === 'my') {
-                filteredTasks = tasks.filter(task => task.userId === currentUser.uid);
-            }
-            
-            // Sort tasks by priority (high to low) and then by due date
-            filteredTasks.sort((a, b) => {
-                const priorityOrder = { high: 3, medium: 2, low: 1 };
-                if (priorityOrder[b.priority] !== priorityOrder[a.priority]) {
-                    return priorityOrder[b.priority] - priorityOrder[a.priority];
-                }
-                
-                // If same priority, sort by due date (earliest first)
-                if (a.dueDate && b.dueDate) {
-                    return new Date(a.dueDate) - new Date(b.dueDate);
-                }
-                
-                return 0;
-            });
-            
-            // Show empty state if no tasks
-            if (filteredTasks.length === 0) {
-                const emptyState = document.createElement('div');
-                emptyState.className = 'empty-state';
-                emptyState.innerHTML = `
-                    <i class="fas fa-clipboard-list"></i>
-                    <h3>No maintenance tasks found</h3>
-                    <p>${currentFilter === 'all' ? 'Add your first maintenance task using the form on the left' : 'No tasks match the selected filter'}</p>
-                `;
-                tasksContainer.appendChild(emptyState);
-                return;
-            }
-            
-            // Render tasks
-            filteredTasks.forEach(task => {
-                const taskElement = createTaskElement(task);
-                tasksContainer.appendChild(taskElement);
-            });
-        }
-        
-        // Create a task element
-        function createTaskElement(task) {
-            const taskElement = document.createElement('div');
-            taskElement.className = `task-item ${task.status === 'completed' ? 'completed-task' : ''}`;
-            
-            // Format date for display
-            const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            }) : 'No due date';
-            
-            // Format category for display
-            const categoryDisplay = task.category.charAt(0).toUpperCase() + task.category.slice(1);
-            
-            // Priority class
-            const priorityClass = `priority-${task.priority}`;
-            
-            // Check if task belongs to current user
-            const isMyTask = task.userId === currentUser.uid;
-            
-            taskElement.innerHTML = `
-                <div class="task-header">
-                    <div>
-                        <div class="task-title">${task.title}</div>
-                        <div class="created-by">
-                            <i class="fas fa-user${task.public ? '-friends' : ''}"></i> 
-                            ${task.userName} ${task.public ? '(Public)' : '(Private)'}
-                        </div>
-                    </div>
-                    <div class="task-priority ${priorityClass}">${task.priority.toUpperCase()}</div>
-                </div>
-                <div class="task-description">${task.description || 'No description provided'}</div>
-                <div class="task-footer">
-                    <div>
-                        <div><i class="fas fa-tag"></i> ${categoryDisplay}</div>
-                        <div><i class="fas fa-calendar-day"></i> Due: ${dueDate}</div>
-                        <div><i class="fas fa-user"></i> ${task.assigned}</div>
-                    </div>
-                    <div class="task-actions">
-                        ${task.status === 'pending' ? 
-                            `<button class="action-btn complete" onclick="completeTask('${task.id}')" ${!isMyTask ? 'disabled style="opacity:0.5"' : ''}>
-                                <i class="fas fa-check"></i> Complete
-                            </button>` : 
-                            `<button class="action-btn complete" onclick="pendingTask('${task.id}')" ${!isMyTask ? 'disabled style="opacity:0.5"' : ''}>
-                                <i class="fas fa-undo"></i> Reopen
-                            </button>`
-                        }
-                        <button class="action-btn edit" onclick="editTask('${task.id}')" ${!isMyTask ? 'disabled style="opacity:0.5"' : ''}>
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                        <button class="action-btn delete" onclick="deleteTask('${task.id}')" ${!isMyTask ? 'disabled style="opacity:0.5"' : ''}>
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            return taskElement;
-        }
-        
-        // Complete a task
-        function completeTask(taskId) {
-            db.collection('tasks').doc(taskId).update({
-                status: 'completed',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            })
-            .then(() => {
-                showAlert('success', 'Task marked as completed!');
-            })
-            .catch(error => {
-                showAlert('error', 'Error completing task: ' + error.message);
-            });
-        }
-        
-        // Reopen a completed task
-        function pendingTask(taskId) {
-            db.collection('tasks').doc(taskId).update({
-                status: 'pending',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            })
-            .then(() => {
-                showAlert('success', 'Task reopened!');
-            })
-            .catch(error => {
-                showAlert('error', 'Error reopening task: ' + error.message);
-            });
-        }
-        
-        // Edit a task
-        function editTask(taskId) {
-            const task = tasks.find(task => task.id === taskId);
-            if (task) {
-                // Fill form with task data
-                document.getElementById('task-title').value = task.title;
-                document.getElementById('task-description').value = task.description;
-                document.getElementById('task-category').value = task.category;
-                document.getElementById('task-due-date').value = task.dueDate;
-                document.getElementById('task-assigned').value = task.assigned;
-                document.getElementById('task-public').checked = task.public;
-                
-                // Set priority buttons
-                priorityButtons.forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.dataset.priority === task.priority) {
-                        btn.classList.add('active');
-                    }
-                });
-                document.getElementById('task-priority').value = task.priority;
-                
-                // Change button text
-                document.getElementById('save-task').innerHTML = '<i class="fas fa-save"></i> Update Task';
-                
-                // Set editing state
-                editingTaskId = taskId;
-                
-                // Scroll to form
-                document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-        
-        // Delete a task
-        function deleteTask(taskId) {
-            if (confirm('Are you sure you want to delete this task?')) {
-                db.collection('tasks').doc(taskId).delete()
-                    .then(() => {
-                        showAlert('success', 'Task deleted successfully!');
-                    })
-                    .catch(error => {
-                        showAlert('error', 'Error deleting task: ' + error.message);
-                    });
-            }
-        }
-        
-        // Update statistics
-        function updateStats() {
-            const total = tasks.length;
-            const pending = tasks.filter(task => task.status === 'pending').length;
-            const completed = tasks.filter(task => task.status === 'completed').length;
-            const myTasks = tasks.filter(task => task.userId === currentUser.uid).length;
-            
-            totalTasksEl.textContent = total;
-            pendingTasksEl.textContent = pending;
-            completedTasksEl.textContent = completed;
-            myTasksEl.textContent = myTasks;
-        }
-        
-        // Demo mode - if Firebase config is not set up
-        function checkFirebaseConfig() {
-            if (firebaseConfig.apiKey === "AIzaSyC-Xk_RnhGWR19jFAG_hp1QgLJ7J0zBqfY") {
-                showAlert('error', '⚠️ Using demo mode. To enable real cloud storage, replace the Firebase configuration with your own.');
-                
-                // Enable demo mode with localStorage fallback
-                enableDemoMode();
-            }
-        }
-        
-        // Demo mode using localStorage
-        function enableDemoMode() {
-            // Override Firebase functions with localStorage
-            window.loginUser = function() {
-                const email = document.getElementById('login-email').value;
-                if (email) {
-                    currentUser = {
-                        uid: 'demo-user',
-                        email: email,
-                        displayName: email.split('@')[0]
-                    };
-                    showAlert('success', 'Demo login successful! (Using localStorage)');
-                    showMainApp();
-                } else {
-                    showAlert('error', 'Please enter an email for demo mode');
-                }
-            };
-            
-            window.registerUser = function() {
-                const name = document.getElementById('register-name').value;
-                const email = document.getElementById('register-email').value;
-                
-                if (name && email) {
-                    currentUser = {
-                        uid: 'demo-user',
-                        email: email,
-                        displayName: name
-                    };
-                    showAlert('success', 'Demo account created! (Using localStorage)');
-                    loginTab.click();
-                    document.getElementById('login-email').value = email;
-                } else {
-                    showAlert('error', 'Please fill all fields');
-                }
-            };
-            
-            // Override loadTasks
-            window.loadTasks = function() {
-                tasks = JSON.parse(localStorage.getItem('maintenanceTasks')) || [];
-                renderTasks();
-                updateStats();
-            };
-            
-            // Override saveTask
-            const originalSaveTask = window.saveTask;
-            window.saveTask = function(e) {
-                e.preventDefault();
-                
-                // Get form values
-                const title = document.getElementById('task-title').value;
-                const description = document.getElementById('task-description').value;
-                const category = document.getElementById('task-category').value;
-                const priority = document.getElementById('task-priority').value;
-                const dueDate = document.getElementById('task-due-date').value;
-                const assigned = document.getElementById('task-assigned').value;
-                const isPublic = document.getElementById('task-public').checked;
-                
-                // Create task object
-                const task = {
-                    id: editingTaskId || Date.now().toString(),
-                    title,
-                    description,
-                    category,
-                    priority,
-                    dueDate,
-                    assigned: assigned || 'Unassigned',
-                    status: 'pending',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                    userId: currentUser.uid,
-                    userName: currentUser.displayName,
-                    public: isPublic
-                };
-                
-                if (editingTaskId) {
-                    // Update existing task
-                    const index = tasks.findIndex(t => t.id === editingTaskId);
-                    tasks[index] = task;
-                    showAlert('success', 'Task updated successfully! (Demo mode)');
-                } else {
-                    // Add new task
-                    tasks.push(task);
-                    showAlert('success', 'Task added successfully! (Demo mode)');
-                }
-                
-                // Save to localStorage
-                localStorage.setItem('maintenanceTasks', JSON.stringify(tasks));
-                
-                // Reset form
-                maintenanceForm.reset();
-                document.getElementById('task-priority').value = 'medium';
-                priorityButtons.forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.dataset.priority === 'medium') {
-                        btn.classList.add('active');
-                    }
-                });
-                
-                // Reset editing state
-                editingTaskId = null;
-                document.getElementById('save-task').innerHTML = '<i class="fas fa-save"></i> Save to Cloud';
-                
-                // Reload tasks
-                loadTasks();
-            };
-            
-            // Override task actions
-            window.completeTask = function(taskId) {
-                const index = tasks.findIndex(task => task.id === taskId);
-                if (index !== -1) {
-                    tasks[index].status = 'completed';
-                    tasks[index].updatedAt = new Date().toISOString();
-                    localStorage.setItem('maintenanceTasks', JSON.stringify(tasks));
-                    loadTasks();
-                    showAlert('success', 'Task marked as completed! (Demo mode)');
-                }
-            };
-            
-            window.pendingTask = function(taskId) {
-                const index = tasks.findIndex(task => task.id === taskId);
-                if (index !== -1) {
-                    tasks[index].status = 'pending';
-                    tasks[index].updatedAt = new Date().toISOString();
-                    localStorage.setItem('maintenanceTasks', JSON.stringify(tasks));
-                    loadTasks();
-                    showAlert('success', 'Task reopened! (Demo mode)');
-                }
-            };
-            
-            window.deleteTask = function(taskId) {
-                if (confirm('Are you sure you want to delete this task?')) {
-                    tasks = tasks.filter(task => task.id !== taskId);
-                    localStorage.setItem('maintenanceTasks', JSON.stringify(tasks));
-                    loadTasks();
-                    showAlert('success', 'Task deleted successfully! (Demo mode)');
-                }
-            };
-            
-            window.editTask = function(taskId) {
-                const task = tasks.find(task => task.id === taskId);
-                if (task) {
-                    // Fill form with task data
-                    document.getElementById('task-title').value = task.title;
-                    document.getElementById('task-description').value = task.description;
-                    document.getElementById('task-category').value = task.category;
-                    document.getElementById('task-due-date').value = task.dueDate;
-                    document.getElementById('task-assigned').value = task.assigned;
-                    document.getElementById('task-public').checked = task.public;
-                    
-                    // Set priority buttons
-                    priorityButtons.forEach(btn => {
-                        btn.classList.remove('active');
-                        if (btn.dataset.priority === task.priority) {
-                            btn.classList.add('active');
-                        }
-                    });
-                    document.getElementById('task-priority').value = task.priority;
-                    
-                    // Change button text
-                    document.getElementById('save-task').innerHTML = '<i class="fas fa-save"></i> Update Task';
-                    
-                    // Set editing state
-                    editingTaskId = taskId;
-                    
-                    // Scroll to form
-                    document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
-                }
-            };
-            
-            // Add some demo tasks if none exist
-            if (!localStorage.getItem('maintenanceTasks')) {
-                const demoTasks = [
-                    {
-                        id: '1',
-                        title: 'Replace HVAC filters',
-                        description: 'Replace all air filters in the building HVAC system',
-                        category: 'hvac',
-                        priority: 'medium',
-                        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        assigned: 'Maintenance Team',
-                        status: 'pending',
-                        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                        userId: 'demo-user',
-                        userName: 'Demo User',
-                        public: true
-                    },
-                    {
-                        id: '2',
-                        title: 'Fix leaking faucet in restroom',
-                        description: 'Second floor men\'s restroom faucet is leaking',
-                        category: 'plumbing',
-                        priority: 'high',
-                        dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        assigned: 'John Smith',
-                        status: 'pending',
-                        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-                        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-                        userId: 'demo-user',
-                        userName: 'Demo User',
-                        public: true
-                    },
-                    {
-                        id: '3',
-                        title: 'Inspect fire extinguishers',
-                        description: 'Monthly inspection of all fire extinguishers on premises',
-                        category: 'safety',
-                        priority: 'high',
-                        dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        assigned: 'Safety Officer',
-                        status: 'completed',
-                        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-                        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-                        userId: 'demo-user-2',
-                        userName: 'Another User',
-                        public: true
-                    }
                 ];
                 
-                localStorage.setItem('maintenanceTasks', JSON.stringify(demoTasks));
+                // Créer un classeur et une feuille
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+                
+                // Ajouter la feuille au classeur
+                XLSX.utils.book_append_sheet(wb, ws, "Absences");
+                
+                // Ajouter une deuxième feuille avec les données mensuelles
+                const monthlyWsData = [
+                    ["Mois", "Nombre d'absences"],
+                    ...demoData.monthlyData.map(item => [item.month, item.absences])
+                ];
+                
+                const monthlyWs = XLSX.utils.aoa_to_sheet(monthlyWsData);
+                XLSX.utils.book_append_sheet(wb, monthlyWs, "Par mois");
+                
+                // Générer le fichier Excel
+                const fileName = `absences_${new Date().toISOString().split('T')[0]}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+                
+                // Simuler l'upload vers Firebase Storage
+                simulateFirebaseUpload(fileName);
+                
+            } catch (error) {
+                console.error("Erreur lors de l'export Excel:", error);
+                alert("Une erreur est survenue lors de l'export.");
             }
         }
         
-        // Initialize the app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            init();
-            checkFirebaseConfig();
-        });
+        // Exporter uniquement le tableau en Excel
+        function exportTableToExcel() {
+            try {
+                // Préparer les données du tableau
+                const table = document.getElementById('absencesTable');
+                const ws = XLSX.utils.table_to_sheet(table);
+                
+                // Créer un classeur
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Absences par employé");
+                
+                // Générer le fichier
+                const fileName = `tableau_absences_${new Date().toISOString().split('T')[0]}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+                
+                // Simuler l'upload vers Firebase Storage
+                simulateFirebaseUpload(fileName);
+                
+            } catch (error) {
+                console.error("Erreur lors de l'export du tableau:", error);
+                alert("Une erreur est survenue lors de l'export du tableau.");
+            }
+        }
+        
+        // Exporter le diagramme en image
+        function exportChartImage() {
+            try {
+                // Récupérer le canvas du graphique
+                const chartCanvas = document.getElementById('absencesChart');
+                
+                // Créer un lien de téléchargement
+                const link = document.createElement('a');
+                link.download = `diagramme_absences_${new Date().toISOString().split('T')[0]}.png`;
+                link.href = chartCanvas.toDataURL('image/png');
+                link.click();
+                
+                // Simuler l'upload vers Firebase Storage
+                simulateFirebaseUpload(link.download);
+                
+            } catch (error) {
+                console.error("Erreur lors de l'export du diagramme:", error);
+                alert("Une erreur est survenue lors de l'export du diagramme.");
+            }
+        }
+        
+        // Simuler l'upload vers Firebase Storage
+        function simulateFirebaseUpload(fileName) {
+            console.log(`Simulation d'upload vers Firebase Storage: ${fileName}`);
+            
+            // Dans une application réelle, on utiliserait:
+            // storage.ref(`exports/${fileName}`).put(blob).then(...)
+            
+            // Pour la démo, on affiche juste un message
+            setTimeout(() => {
+                alert(`Fichier "${fileName}" exporté avec succès!\n\n(En production, il serait automatiquement sauvegardé dans Firebase Storage avec un lien public)`);
+            }, 500);
+        }
     </script>
 </body>
 </html>
