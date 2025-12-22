@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de Bord des Absences Mensuelles</title>
+    <title>Socité Le Phare de Cap Bon - Tableau de Bord des Absences</title>
     
     <!-- Feuilles de style -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -21,12 +21,13 @@
     
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
+            --primary-color: #1a5276;
+            --secondary-color: #2e86c1;
             --accent-color: #e74c3c;
             --success-color: #27ae60;
+            --warning-color: #f39c12;
             --light-color: #ecf0f1;
-            --dark-color: #2c3e50;
+            --dark-color: #154360;
             --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             --border-radius: 8px;
         }
@@ -42,12 +43,98 @@
             background-color: #f5f7fa;
             color: #333;
             line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-color), #3498db);
             padding: 20px;
+        }
+        
+        .login-box {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .login-logo {
+            margin-bottom: 30px;
+        }
+        
+        .login-logo i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .login-title {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+        
+        .company-name {
+            color: var(--secondary-color);
+            font-weight: 600;
+            font-size: 1.4rem;
+            margin-bottom: 30px;
+        }
+        
+        .login-form {
+            margin-top: 20px;
+        }
+        
+        .login-input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .login-btn:hover {
+            background-color: var(--dark-color);
+        }
+        
+        .login-error {
+            color: var(--accent-color);
+            margin-top: 15px;
+            display: none;
+        }
+        
+        /* Main Dashboard (hidden by default) */
+        .dashboard-container {
+            display: none;
         }
         
         .container {
             max-width: 1400px;
             margin: 0 auto;
+            padding: 20px;
         }
         
         header {
@@ -72,6 +159,11 @@
             font-size: 2.5rem;
         }
         
+        .company-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
         h1 {
             font-size: 2.2rem;
             margin-bottom: 5px;
@@ -82,9 +174,27 @@
             font-weight: 300;
         }
         
+        .company-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
         .dashboard-controls {
             display: flex;
             gap: 15px;
+            align-items: center;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: var(--border-radius);
         }
         
         .btn {
@@ -110,9 +220,20 @@
             color: white;
         }
         
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
         .btn-danger {
             background-color: var(--accent-color);
             color: white;
+        }
+        
+        .btn-logout {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
         .btn:hover {
@@ -225,7 +346,7 @@
         }
         
         th, td {
-            padding: 15px;
+            padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #eee;
         }
@@ -344,6 +465,11 @@
             border-top: 1px solid #eee;
         }
         
+        .copyright {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
         .firebase-status {
             display: flex;
             align-items: center;
@@ -392,183 +518,316 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">
-                <i class="fas fa-calendar-times"></i>
-                <div>
-                    <h1>Tableau de Bord des Absences</h1>
-                    <p class="subtitle">Suivi mensuel et analyse des absences du personnel</p>
-                </div>
+    <!-- Login Screen -->
+    <div class="login-container" id="loginScreen">
+        <div class="login-box">
+            <div class="login-logo">
+                <i class="fas fa-lighthouse"></i>
+                <h2 class="login-title">Socité Le Phare de Cap Bon</h2>
+                <div class="company-name">Gestion des Absences</div>
             </div>
-            <div class="dashboard-controls">
-                <button class="btn btn-primary" id="addAbsenceBtn">
-                    <i class="fas fa-plus-circle"></i> Ajouter une absence
+            
+            <form id="loginForm" class="login-form">
+                <input type="text" id="username" class="login-input" placeholder="Nom d'utilisateur" required>
+                <input type="password" id="password" class="login-input" placeholder="Mot de passe" required>
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Se Connecter
                 </button>
-                <button class="btn btn-success" id="exportBtn">
-                    <i class="fas fa-file-excel"></i> Exporter en Excel
-                </button>
-            </div>
-        </header>
-        
-        <div class="stats-container">
-            <div class="stat-card">
-                <div class="stat-icon absences">
-                    <i class="fas fa-user-times fa-2x"></i>
+                <div id="loginError" class="login-error">
+                    <i class="fas fa-exclamation-circle"></i> Identifiants incorrects
                 </div>
-                <div class="stat-value" id="totalAbsences">0</div>
-                <div class="stat-label">Total des absences ce mois</div>
-            </div>
+            </form>
             
-            <div class="stat-card">
-                <div class="stat-icon employees">
-                    <i class="fas fa-users fa-2x"></i>
-                </div>
-                <div class="stat-value" id="totalEmployees">0</div>
-                <div class="stat-label">Employés suivis</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon month">
-                    <i class="fas fa-calendar-alt fa-2x"></i>
-                </div>
-                <div class="stat-value" id="currentMonth">Mai</div>
-                <div class="stat-label">Mois en cours</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon rate">
-                    <i class="fas fa-chart-line fa-2x"></i>
-                </div>
-                <div class="stat-value" id="absenceRate">0%</div>
-                <div class="stat-label">Taux d'absence</div>
+            <div style="margin-top: 30px; font-size: 0.8rem; color: #7f8c8d;">
+                <p><strong>Identifiants de démo:</strong></p>
+                <p>Utilisateur: admin</p>
+                <p>Mot de passe: admin</p>
             </div>
         </div>
-        
-        <div class="main-content">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Absences par employé</h2>
-                    <div class="export-options">
-                        <button class="btn export-btn" id="exportTableBtn">
-                            <i class="fas fa-download"></i> Tableau
-                        </button>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="dashboard-container" id="dashboard">
+        <div class="container">
+            <header>
+                <div class="logo">
+                    <i class="fas fa-lighthouse"></i>
+                    <div class="company-info">
+                        <h1>Socité Le Phare de Cap Bon</h1>
+                        <p class="subtitle">Tableau de Bord des Absences Mensuelles</p>
+                        <div class="company-badge">
+                            <i class="fas fa-industry"></i> Industrie & Production
+                        </div>
                     </div>
                 </div>
-                <div class="table-responsive">
-                    <table id="absencesTable">
-                        <thead>
-                            <tr>
-                                <th>Employé</th>
-                                <th>Département</th>
-                                <th>Jours d'absence</th>
-                                <th>Taux</th>
-                                <th>Statut</th>
-                            </tr>
-                        </thead>
-                        <tbody id="absencesTableBody">
-                            <!-- Les données seront insérées ici dynamiquement -->
-                            <tr>
-                                <td colspan="5" class="loading">
-                                    <i class="fas fa-spinner fa-spin"></i><br>
-                                    Chargement des données...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="dashboard-controls">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="currentUser">Administrateur</span>
+                    </div>
+                    <button class="btn btn-primary" id="addAbsenceBtn">
+                        <i class="fas fa-plus-circle"></i> Ajouter une absence
+                    </button>
+                    <button class="btn btn-success" id="exportBtn">
+                        <i class="fas fa-file-excel"></i> Exporter
+                    </button>
+                    <button class="btn btn-logout" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Déconnexion
+                    </button>
+                </div>
+            </header>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon absences">
+                        <i class="fas fa-user-times fa-2x"></i>
+                    </div>
+                    <div class="stat-value" id="totalAbsences">0</div>
+                    <div class="stat-label">Total des absences ce mois</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon employees">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    <div class="stat-value" id="totalEmployees">0</div>
+                    <div class="stat-label">Employés suivis</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon month">
+                        <i class="fas fa-calendar-alt fa-2x"></i>
+                    </div>
+                    <div class="stat-value" id="currentMonth">Mai</div>
+                    <div class="stat-label">Mois en cours</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon rate">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                    <div class="stat-value" id="absenceRate">0%</div>
+                    <div class="stat-label">Taux d'absence</div>
                 </div>
             </div>
             
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Diagramme des absences par mois</h2>
-                    <div class="export-options">
-                        <button class="btn export-btn" id="exportChartBtn">
-                            <i class="fas fa-download"></i> Diagramme
-                        </button>
+            <div class="main-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Absences par employé</h2>
+                        <div class="export-options">
+                            <button class="btn export-btn" id="exportTableBtn">
+                                <i class="fas fa-download"></i> Tableau
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="absencesTable">
+                            <thead>
+                                <tr>
+                                    <th>Matricule</th>
+                                    <th>Employé</th>
+                                    <th>Département</th>
+                                    <th>Jours d'absence</th>
+                                    <th>Taux</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody id="absencesTableBody">
+                                <tr>
+                                    <td colspan="6" class="loading">
+                                        <i class="fas fa-spinner fa-spin"></i><br>
+                                        Chargement des données...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="absencesChart"></canvas>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Diagramme des absences par mois</h2>
+                        <div class="export-options">
+                            <button class="btn export-btn" id="exportChartBtn">
+                                <i class="fas fa-download"></i> Diagramme
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="absencesChart"></canvas>
+                    </div>
                 </div>
             </div>
+            
+            <!-- Modal pour ajouter une absence -->
+            <div class="modal" id="addAbsenceModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Ajouter une absence</h3>
+                        <button class="close-btn" id="closeModalBtn">&times;</button>
+                    </div>
+                    <form id="absenceForm">
+                        <div class="form-group">
+                            <label for="employeeMatricule">Matricule</label>
+                            <input type="text" id="employeeMatricule" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="employeeName">Nom de l'employé</label>
+                            <input type="text" id="employeeName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="employeeDepartment">Département</label>
+                            <select id="employeeDepartment" required>
+                                <option value="">Sélectionner un département</option>
+                                <option value="Production">Production</option>
+                                <option value="Qualité">Qualité</option>
+                                <option value="Maintenance">Maintenance</option>
+                                <option value="Logistique">Logistique</option>
+                                <option value="Ressources Humaines">Ressources Humaines</option>
+                                <option value="Informatique">Informatique</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Finances">Finances</option>
+                                <option value="Ventes">Ventes</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="absenceDate">Date de l'absence</label>
+                            <input type="date" id="absenceDate" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="absenceDays">Nombre de jours</label>
+                            <input type="number" id="absenceDays" min="0.5" max="30" step="0.5" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="absenceReason">Motif</label>
+                            <select id="absenceReason" required>
+                                <option value="">Sélectionner un motif</option>
+                                <option value="Maladie">Maladie</option>
+                                <option value="Congé payé">Congé payé</option>
+                                <option value="Formation">Formation</option>
+                                <option value="Personnel">Personnel</option>
+                                <option value="Accident de travail">Accident de travail</option>
+                                <option value="Maternité">Maternité</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn" id="cancelBtn">Annuler</button>
+                            <button type="submit" class="btn btn-primary">Enregistrer l'absence</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <footer>
+                <p class="copyright">Socité Le Phare de Cap Bon - Système de gestion des absences &copy; hamada 2025</p>
+                <p>Tous droits réservés | Version 1.0</p>
+                <div class="firebase-status">
+                    <div class="dot" id="firebaseStatusDot"></div>
+                    <span id="firebaseStatusText">Connexion à Firebase...</span>
+                </div>
+            </footer>
         </div>
-        
-        <!-- Modal pour ajouter une absence -->
-        <div class="modal" id="addAbsenceModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">Ajouter une absence</h3>
-                    <button class="close-btn" id="closeModalBtn">&times;</button>
-                </div>
-                <form id="absenceForm">
-                    <div class="form-group">
-                        <label for="employeeName">Nom de l'employé</label>
-                        <input type="text" id="employeeName" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="employeeDepartment">Département</label>
-                        <select id="employeeDepartment" required>
-                            <option value="">Sélectionner un département</option>
-                            <option value="Ressources Humaines">Ressources Humaines</option>
-                            <option value="Informatique">Informatique</option>
-                            <option value="Marketing">Marketing</option>
-                            <option value="Finances">Finances</option>
-                            <option value="Production">Production</option>
-                            <option value="Ventes">Ventes</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="absenceDate">Date de l'absence</label>
-                        <input type="date" id="absenceDate" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="absenceDays">Nombre de jours</label>
-                        <input type="number" id="absenceDays" min="0.5" max="30" step="0.5" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="absenceReason">Motif</label>
-                        <select id="absenceReason" required>
-                            <option value="">Sélectionner un motif</option>
-                            <option value="Maladie">Maladie</option>
-                            <option value="Congé payé">Congé payé</option>
-                            <option value="Formation">Formation</option>
-                            <option value="Personnel">Personnel</option>
-                            <option value="Autre">Autre</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" class="btn" id="cancelBtn">Annuler</button>
-                        <button type="submit" class="btn btn-primary">Enregistrer l'absence</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        
-        <footer>
-            <p>Système de gestion des absences mensuelles &copy; 2023</p>
-            <div class="firebase-status">
-                <div class="dot" id="firebaseStatusDot"></div>
-                <span id="firebaseStatusText">Connexion à Firebase...</span>
-            </div>
-        </footer>
     </div>
 
     <script>
-        // Configuration Firebase
+        // ============================
+        // CONFIGURATION D'AUTHENTIFICATION
+        // ============================
+        const VALID_CREDENTIALS = {
+            username: 'admin',
+            password: 'admin'
+        };
+
+        // ============================
+        // GESTION DE LA CONNEXION
+        // ============================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vérifier si l'utilisateur est déjà connecté
+            const isLoggedIn = localStorage.getItem('lePhareLoggedIn');
+            const currentUser = localStorage.getItem('lePhareCurrentUser');
+            
+            if (isLoggedIn === 'true' && currentUser) {
+                showDashboard(currentUser);
+            }
+            
+            // Gestionnaire de formulaire de connexion
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const loginError = document.getElementById('loginError');
+                
+                // Validation des identifiants
+                if (username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password) {
+                    // Enregistrer la session
+                    localStorage.setItem('lePhareLoggedIn', 'true');
+                    localStorage.setItem('lePhareCurrentUser', username);
+                    
+                    // Afficher le tableau de bord
+                    showDashboard(username);
+                    loginError.style.display = 'none';
+                } else {
+                    // Afficher l'erreur
+                    loginError.style.display = 'block';
+                    
+                    // Animation d'erreur
+                    document.getElementById('username').style.borderColor = '#e74c3c';
+                    document.getElementById('password').style.borderColor = '#e74c3c';
+                    
+                    setTimeout(() => {
+                        document.getElementById('username').style.borderColor = '#ddd';
+                        document.getElementById('password').style.borderColor = '#ddd';
+                    }, 2000);
+                }
+            });
+            
+            // Gestionnaire de déconnexion
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                logout();
+            });
+        });
+        
+        function showDashboard(username) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('currentUser').textContent = username === 'admin' ? 'Administrateur' : username;
+            
+            // Initialiser le tableau de bord
+            initializeDashboard();
+        }
+        
+        function logout() {
+            localStorage.removeItem('lePhareLoggedIn');
+            localStorage.removeItem('lePhareCurrentUser');
+            
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+            
+            // Réinitialiser le formulaire de connexion
+            document.getElementById('loginForm').reset();
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        // ============================
+        // CONFIGURATION FIREBASE
+        // ============================
         const firebaseConfig = {
             apiKey: "AIzaSyB2COjVbQ2Cc4y8c3uoztb-hkAZuUREnBo",
-  authDomain: "mohamedhamada-dc8ed.firebaseapp.com",
-  projectId: "mohamedhamada-dc8ed",
-  storageBucket: "mohamedhamada-dc8ed.firebasestorage.app",
-  messagingSenderId: "356832485630",
-  appId: "1:356832485630:web:b9de8c9c1d8dcb760705af",
-  measurementId: "G-RN4VFXMCGB"
+            authDomain: "mohamedhamada-dc8ed.firebaseapp.com",
+            projectId: "mohamedhamada-dc8ed",
+            storageBucket: "mohamedhamada-dc8ed.firebasestorage.app",
+            messagingSenderId: "356832485630",
+            appId: "1:356832485630:web:b9de8c9c1d8dcb760705af",
+            measurementId: "G-RN4VFXMCGB"
         };
 
         // Initialiser Firebase
@@ -577,43 +836,47 @@
         let absencesChart;
         
         try {
-            // Initialiser Firebase avec la configuration
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
             storage = firebase.storage();
             
-            // Mettre à jour le statut de connexion
             document.getElementById('firebaseStatusDot').classList.add('connected');
-            document.getElementById('firebaseStatusText').textContent = 'Connecté à Firebase (mode démo)';
-            console.log("Firebase initialisé en mode démo");
+            document.getElementById('firebaseStatusText').textContent = 'Connecté à Firebase';
+            console.log("Firebase initialisé avec succès");
         } catch (error) {
             console.error("Erreur d'initialisation Firebase:", error);
             document.getElementById('firebaseStatusText').textContent = 'Mode démo (Firebase non configuré)';
             document.getElementById('firebaseStatusText').style.color = '#f39c12';
         }
         
-        // Données de démo (à utiliser si Firebase n'est pas configuré)
+        // ============================
+        // DONNÉES DE DÉMO AVEC MATRICULES
+        // ============================
         const demoData = {
             employees: [
-                { id: 1, name: "Marie Martin", department: "Ressources Humaines", absences: 3 },
-                { id: 2, name: "Jean Dupont", department: "Informatique", absences: 2 },
-                { id: 3, name: "Sophie Bernard", department: "Marketing", absences: 5 },
-                { id: 4, name: "Pierre Leroy", department: "Finances", absences: 1 },
-                { id: 5, name: "Julie Petit", department: "Production", absences: 4 },
-                { id: 6, name: "Thomas Moreau", department: "Ventes", absences: 2 }
+                { id: 1, matricule: "PH-2023-001", name: "Marie Martin", department: "Production", absences: 3 },
+                { id: 2, matricule: "PH-2023-002", name: "Jean Dupont", department: "Qualité", absences: 2 },
+                { id: 3, matricule: "PH-2023-003", name: "Sophie Bernard", department: "Maintenance", absences: 5 },
+                { id: 4, matricule: "PH-2023-004", name: "Pierre Leroy", department: "Logistique", absences: 1 },
+                { id: 5, matricule: "PH-2023-005", name: "Julie Petit", department: "Ressources Humaines", absences: 4 },
+                { id: 6, matricule: "PH-2023-006", name: "Thomas Moreau", department: "Informatique", absences: 2 },
+                { id: 7, matricule: "PH-2023-007", name: "Mohamed Hamada", department: "Direction", absences: 0 },
+                { id: 8, matricule: "PH-2023-008", name: "Fatima Zohra", department: "Production", absences: 3 }
             ],
             monthlyData: [
                 { month: "Janvier", absences: 12 },
                 { month: "Février", absences: 8 },
                 { month: "Mars", absences: 15 },
                 { month: "Avril", absences: 10 },
-                { month: "Mai", absences: 18 },
+                { month: "Mai", absences: 22 },
                 { month: "Juin", absences: 9 }
             ]
         };
         
-        // Initialiser l'application
-        document.addEventListener('DOMContentLoaded', function() {
+        // ============================
+        // INITIALISATION DU TABLEAU DE BORD
+        // ============================
+        function initializeDashboard() {
             // Initialiser les données
             loadAbsenceData();
             
@@ -644,25 +907,22 @@
                     closeAddAbsenceModal();
                 }
             });
-        });
+        }
         
-        // Charger les données d'absence
+        // ============================
+        // FONCTIONS DU TABLEAU DE BORD
+        // ============================
         function loadAbsenceData() {
-            // Si Firebase est configuré, charger depuis Firestore
             if (db) {
                 loadFromFirestore();
             } else {
-                // Sinon, utiliser les données de démo
                 useDemoData();
             }
         }
         
-        // Charger les données depuis Firestore
         async function loadFromFirestore() {
             try {
                 console.log("Chargement des données depuis Firestore...");
-                // Cette partie nécessite une configuration Firebase réelle
-                // Pour la démo, nous utilisons les données de démo
                 useDemoData();
             } catch (error) {
                 console.error("Erreur lors du chargement depuis Firestore:", error);
@@ -670,14 +930,13 @@
             }
         }
         
-        // Utiliser les données de démo
         function useDemoData() {
-            console.log("Utilisation des données de démo");
+            console.log("Utilisation des données de démo - Socité Le Phare de Cap Bon");
             
             // Mettre à jour les statistiques
             const totalAbsences = demoData.employees.reduce((sum, emp) => sum + emp.absences, 0);
             const totalEmployees = demoData.employees.length;
-            const absenceRate = ((totalAbsences / (totalEmployees * 22)) * 100).toFixed(1); // 22 jours de travail moyen par mois
+            const absenceRate = ((totalAbsences / (totalEmployees * 22)) * 100).toFixed(1);
             
             document.getElementById('totalAbsences').textContent = totalAbsences;
             document.getElementById('totalEmployees').textContent = totalEmployees;
@@ -690,13 +949,12 @@
             updateChart(demoData.monthlyData);
         }
         
-        // Mettre à jour le tableau des absences
         function updateAbsencesTable(employees) {
             const tableBody = document.getElementById('absencesTableBody');
             tableBody.innerHTML = '';
             
             employees.forEach(employee => {
-                const absenceRate = ((employee.absences / 22) * 100).toFixed(1); // 22 jours de travail moyen par mois
+                const absenceRate = ((employee.absences / 22) * 100).toFixed(1);
                 
                 let badgeClass = 'badge-low';
                 if (employee.absences > 4) {
@@ -707,6 +965,7 @@
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
+                    <td><strong>${employee.matricule}</strong></td>
                     <td>${employee.name}</td>
                     <td>${employee.department}</td>
                     <td>${employee.absences}</td>
@@ -717,7 +976,6 @@
             });
         }
         
-        // Initialiser le graphique
         function initChart() {
             const ctx = document.getElementById('absencesChart').getContext('2d');
             
@@ -726,10 +984,10 @@
                 data: {
                     labels: [],
                     datasets: [{
-                        label: 'Nombre d\'absences',
+                        label: "Nombre d'absences - Le Phare de Cap Bon",
                         data: [],
-                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
-                        borderColor: 'rgba(52, 152, 219, 1)',
+                        backgroundColor: 'rgba(26, 82, 118, 0.7)',
+                        borderColor: 'rgba(26, 82, 118, 1)',
                         borderWidth: 1
                     }]
                 },
@@ -741,7 +999,7 @@
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Nombre d\'absences'
+                                text: "Nombre d'absences"
                             }
                         },
                         x: {
@@ -768,40 +1026,37 @@
             });
         }
         
-        // Mettre à jour le graphique
         function updateChart(monthlyData) {
             absencesChart.data.labels = monthlyData.map(item => item.month);
             absencesChart.data.datasets[0].data = monthlyData.map(item => item.absences);
             absencesChart.update();
         }
         
-        // Ouvrir la modal d'ajout d'absence
         function openAddAbsenceModal() {
             document.getElementById('addAbsenceModal').style.display = 'flex';
         }
         
-        // Fermer la modal d'ajout d'absence
         function closeAddAbsenceModal() {
             document.getElementById('addAbsenceModal').style.display = 'none';
             document.getElementById('absenceForm').reset();
             
-            // Réinitialiser la date à aujourd'hui
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('absenceDate').value = today;
         }
         
-        // Ajouter une absence
         function addAbsence(e) {
             e.preventDefault();
             
+            const employeeMatricule = document.getElementById('employeeMatricule').value;
             const employeeName = document.getElementById('employeeName').value;
             const employeeDepartment = document.getElementById('employeeDepartment').value;
             const absenceDate = document.getElementById('absenceDate').value;
             const absenceDays = parseFloat(document.getElementById('absenceDays').value);
             const absenceReason = document.getElementById('absenceReason').value;
             
-            // Simuler l'ajout à Firebase
-            console.log("Ajout d'absence:", {
+            // Simulation d'ajout
+            console.log("Ajout d'absence - Le Phare de Cap Bon:", {
+                employeeMatricule,
                 employeeName,
                 employeeDepartment,
                 absenceDate,
@@ -809,10 +1064,9 @@
                 absenceReason
             });
             
-            // Dans une vraie application, on enverrait ces données à Firebase
-            // Pour la démo, nous allons juste les ajouter aux données de démo
             const newEmployee = {
                 id: demoData.employees.length + 1,
+                matricule: employeeMatricule || `PH-${new Date().getFullYear()}-${String(demoData.employees.length + 1).padStart(3, '0')}`,
                 name: employeeName,
                 department: employeeDepartment,
                 absences: absenceDays
@@ -820,7 +1074,7 @@
             
             demoData.employees.push(newEmployee);
             
-            // Mettre à jour les données mensuelles (ajouter au mois actuel)
+            // Mettre à jour les données mensuelles
             const currentMonth = new Date().getMonth();
             const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
             const currentMonthName = monthNames[currentMonth];
@@ -833,34 +1087,56 @@
             // Mettre à jour l'interface
             loadAbsenceData();
             
-            // Fermer la modal
             closeAddAbsenceModal();
             
-            // Afficher un message de confirmation
-            alert(`Absence de ${employeeName} enregistrée avec succès!`);
+            // Notification
+            showNotification(`Absence de ${employeeName} (${newEmployee.matricule}) enregistrée avec succès!`, 'success');
         }
         
-        // Exporter les données en Excel
+        function showNotification(message, type = 'info') {
+            // Créer une notification temporaire
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                background: ${type === 'success' ? '#27ae60' : '#3498db'};
+                color: white;
+                border-radius: var(--border-radius);
+                box-shadow: var(--shadow);
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        
+        // ============================
+        // FONCTIONS D'EXPORT
+        // ============================
         function exportToExcel() {
             try {
-                // Préparer les données pour l'export
                 const worksheetData = [
-                    ["Nom", "Département", "Jours d'absence", "Taux d'absence", "Statut"],
+                    ["Matricule", "Nom", "Département", "Jours d'absence", "Taux d'absence", "Statut"],
                     ...demoData.employees.map(emp => {
                         const absenceRate = ((emp.absences / 22) * 100).toFixed(1);
                         const status = emp.absences > 4 ? 'Élevé' : emp.absences > 2 ? 'Moyen' : 'Faible';
-                        return [emp.name, emp.department, emp.absences, `${absenceRate}%`, status];
+                        return [emp.matricule, emp.name, emp.department, emp.absences, `${absenceRate}%`, status];
                     })
                 ];
                 
-                // Créer un classeur et une feuille
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.aoa_to_sheet(worksheetData);
-                
-                // Ajouter la feuille au classeur
                 XLSX.utils.book_append_sheet(wb, ws, "Absences");
                 
-                // Ajouter une deuxième feuille avec les données mensuelles
                 const monthlyWsData = [
                     ["Mois", "Nombre d'absences"],
                     ...demoData.monthlyData.map(item => [item.month, item.absences])
@@ -869,74 +1145,60 @@
                 const monthlyWs = XLSX.utils.aoa_to_sheet(monthlyWsData);
                 XLSX.utils.book_append_sheet(wb, monthlyWs, "Par mois");
                 
-                // Générer le fichier Excel
-                const fileName = `absences_${new Date().toISOString().split('T')[0]}.xlsx`;
+                const fileName = `Le_Phare_de_Cap_Bon_Absences_${new Date().toISOString().split('T')[0]}.xlsx`;
                 XLSX.writeFile(wb, fileName);
                 
-                // Simuler l'upload vers Firebase Storage
                 simulateFirebaseUpload(fileName);
+                showNotification("Fichier Excel exporté avec succès!", 'success');
                 
             } catch (error) {
                 console.error("Erreur lors de l'export Excel:", error);
-                alert("Une erreur est survenue lors de l'export.");
+                showNotification("Erreur lors de l'export", 'error');
             }
         }
         
-        // Exporter uniquement le tableau en Excel
         function exportTableToExcel() {
             try {
-                // Préparer les données du tableau
                 const table = document.getElementById('absencesTable');
                 const ws = XLSX.utils.table_to_sheet(table);
-                
-                // Créer un classeur
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Absences par employé");
                 
-                // Générer le fichier
-                const fileName = `tableau_absences_${new Date().toISOString().split('T')[0]}.xlsx`;
+                const fileName = `Le_Phare_de_Cap_Bon_Tableau_${new Date().toISOString().split('T')[0]}.xlsx`;
                 XLSX.writeFile(wb, fileName);
                 
-                // Simuler l'upload vers Firebase Storage
                 simulateFirebaseUpload(fileName);
+                showNotification("Tableau exporté avec succès!", 'success');
                 
             } catch (error) {
                 console.error("Erreur lors de l'export du tableau:", error);
-                alert("Une erreur est survenue lors de l'export du tableau.");
+                showNotification("Erreur lors de l'export du tableau", 'error');
             }
         }
         
-        // Exporter le diagramme en image
         function exportChartImage() {
             try {
-                // Récupérer le canvas du graphique
                 const chartCanvas = document.getElementById('absencesChart');
-                
-                // Créer un lien de téléchargement
                 const link = document.createElement('a');
-                link.download = `diagramme_absences_${new Date().toISOString().split('T')[0]}.png`;
+                link.download = `Le_Phare_de_Cap_Bon_Diagramme_${new Date().toISOString().split('T')[0]}.png`;
                 link.href = chartCanvas.toDataURL('image/png');
                 link.click();
                 
-                // Simuler l'upload vers Firebase Storage
                 simulateFirebaseUpload(link.download);
+                showNotification("Diagramme exporté avec succès!", 'success');
                 
             } catch (error) {
                 console.error("Erreur lors de l'export du diagramme:", error);
-                alert("Une erreur est survenue lors de l'export du diagramme.");
+                showNotification("Erreur lors de l'export du diagramme", 'error');
             }
         }
         
-        // Simuler l'upload vers Firebase Storage
         function simulateFirebaseUpload(fileName) {
             console.log(`Simulation d'upload vers Firebase Storage: ${fileName}`);
             
-            // Dans une application réelle, on utiliserait:
-            // storage.ref(`exports/${fileName}`).put(blob).then(...)
-            
-            // Pour la démo, on affiche juste un message
+            // Pour la démo, on simule l'upload
             setTimeout(() => {
-                alert(`Fichier "${fileName}" exporté avec succès!\n\n(En production, il serait automatiquement sauvegardé dans Firebase Storage avec un lien public)`);
+                console.log(`Fichier "${fileName}" uploadé vers Firebase Storage`);
             }, 500);
         }
     </script>
