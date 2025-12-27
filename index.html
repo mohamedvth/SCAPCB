@@ -1377,188 +1377,25 @@
     </div>
 
     <script>
-        // ============================================
-        // BASE DE DONNÉES LOCAL (localStorage)
-        // ============================================
-        
-        // Clés pour le stockage local
-        const DB_KEYS = {
-            EMPLOYEES: 'phare_cap_bon_employees',
-            ABSENCES: 'phare_cap_bon_absences',
-            DEPARTMENTS: 'phare_cap_bon_departments',
-            LAST_EMPLOYEE_ID: 'phare_cap_bon_last_employee_id',
-            LAST_ABSENCE_ID: 'phare_cap_bon_last_absence_id'
-        };
-        
-        // Initialiser la base de données
-        function initializeDatabase() {
-            // Vérifier si les données existent, sinon les initialiser
-            if (!localStorage.getItem(DB_KEYS.EMPLOYEES)) {
-                localStorage.setItem(DB_KEYS.EMPLOYEES, JSON.stringify([]));
-            }
-            
-            if (!localStorage.getItem(DB_KEYS.ABSENCES)) {
-                localStorage.setItem(DB_KEYS.ABSENCES, JSON.stringify([]));
-            }
-            
-            if (!localStorage.getItem(DB_KEYS.LAST_EMPLOYEE_ID)) {
-                localStorage.setItem(DB_KEYS.LAST_EMPLOYEE_ID, '0');
-            }
-            
-            if (!localStorage.getItem(DB_KEYS.LAST_ABSENCE_ID)) {
-                localStorage.setItem(DB_KEYS.LAST_ABSENCE_ID, '0');
-            }
-            
-            // Charger les départements
-            loadDepartmentsToStorage();
-        }
-        
-        // Charger les départements dans le stockage
-        function loadDepartmentsToStorage() {
-            const departments = [
-                { id: "production", name: "Production" },
-                { id: "qualite", name: "Qualité" },
-                { id: "logistique", name: "Logistique" },
-                { id: "maintenance", name: "Maintenance" },
-                { id: "administration", name: "Administration" },
-                { id: "rh", name: "Ressources Humaines" },
-                { id: "commercial", name: "Commercial" },
-                { id: "finance", name: "Finances" },
-                { id: "achats", name: "Achats" }
-            ];
-            
-            localStorage.setItem(DB_KEYS.DEPARTMENTS, JSON.stringify(departments));
-        }
-        
-        // Obtenir le prochain ID pour les employés
-        function getNextEmployeeId() {
-            let lastId = parseInt(localStorage.getItem(DB_KEYS.LAST_EMPLOYEE_ID)) || 0;
-            lastId++;
-            localStorage.setItem(DB_KEYS.LAST_EMPLOYEE_ID, lastId.toString());
-            return lastId;
-        }
-        
-        // Obtenir le prochain ID pour les absences
-        function getNextAbsenceId() {
-            let lastId = parseInt(localStorage.getItem(DB_KEYS.LAST_ABSENCE_ID)) || 0;
-            lastId++;
-            localStorage.setItem(DB_KEYS.LAST_ABSENCE_ID, lastId.toString());
-            return lastId;
-        }
-        
-        // Récupérer tous les employés
-        function getAllEmployees() {
-            const employeesData = localStorage.getItem(DB_KEYS.EMPLOYEES);
-            return employeesData ? JSON.parse(employeesData) : [];
-        }
-        
-        // Récupérer toutes les absences
-        function getAllAbsences() {
-            const absencesData = localStorage.getItem(DB_KEYS.ABSENCES);
-            return absencesData ? JSON.parse(absencesData) : [];
-        }
-        
-        // Récupérer tous les départements
-        function getAllDepartments() {
-            const departmentsData = localStorage.getItem(DB_KEYS.DEPARTMENTS);
-            return departmentsData ? JSON.parse(departmentsData) : [];
-        }
-        
-        // Sauvegarder tous les employés
-        function saveAllEmployees(employees) {
-            localStorage.setItem(DB_KEYS.EMPLOYEES, JSON.stringify(employees));
-        }
-        
-        // Sauvegarder toutes les absences
-        function saveAllAbsences(absences) {
-            localStorage.setItem(DB_KEYS.ABSENCES, JSON.stringify(absences));
-        }
-        
-        // Ajouter un employé
-        function addEmployee(employee) {
-            const employees = getAllEmployees();
-            employees.push(employee);
-            saveAllEmployees(employees);
-        }
-        
-        // Mettre à jour un employé
-        function updateEmployee(updatedEmployee) {
-            const employees = getAllEmployees();
-            const index = employees.findIndex(emp => emp.id === updatedEmployee.id);
-            if (index !== -1) {
-                employees[index] = updatedEmployee;
-                saveAllEmployees(employees);
-                return true;
-            }
-            return false;
-        }
-        
-        // Supprimer un employé
-        function deleteEmployee(id) {
-            const employees = getAllEmployees();
-            const filteredEmployees = employees.filter(emp => emp.id !== id);
-            saveAllEmployees(filteredEmployees);
-        }
-        
-        // Ajouter une absence
-        function addAbsence(absence) {
-            const absences = getAllAbsences();
-            absences.push(absence);
-            saveAllAbsences(absences);
-        }
-        
-        // Mettre à jour une absence
-        function updateAbsence(updatedAbsence) {
-            const absences = getAllAbsences();
-            const index = absences.findIndex(abs => abs.id === updatedAbsence.id);
-            if (index !== -1) {
-                absences[index] = updatedAbsence;
-                saveAllAbsences(absences);
-                return true;
-            }
-            return false;
-        }
-        
-        // Supprimer une absence
-        function deleteAbsence(id) {
-            const absences = getAllAbsences();
-            const filteredAbsences = absences.filter(abs => abs.id !== id);
-            saveAllAbsences(filteredAbsences);
-        }
-        
-        // Rechercher un employé par ID
-        function getEmployeeById(id) {
-            const employees = getAllEmployees();
-            return employees.find(emp => emp.id === id);
-        }
-        
-        // Rechercher une absence par ID
-        function getAbsenceById(id) {
-            const absences = getAllAbsences();
-            return absences.find(abs => abs.id === id);
-        }
-        
-        // Rechercher des absences par employé
-        function getAbsencesByEmployeeId(employeeId) {
-            const absences = getAllAbsences();
-            return absences.filter(abs => abs.employeeId === employeeId);
-        }
-        
-        // Vérifier si un matricule existe déjà
-        function isMatriculeExists(matricule, excludeId = null) {
-            const employees = getAllEmployees();
-            return employees.some(emp => 
-                emp.matricule === matricule && 
-                (excludeId === null || emp.id !== excludeId)
-            );
-        }
-        
-        // ============================================
-        // FIN DE LA BASE DE DONNÉES
-        // ============================================
+        // Données initiales vides
+        let employees = [];
+        let absences = [];
 
         // Données pour les mois
         const months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juill", "Août", "Sept", "Oct", "Nov", "Déc"];
+        
+        // Liste des départements
+        const departments = [
+            { id: "production", name: "Production" },
+            { id: "qualite", name: "Qualité" },
+            { id: "logistique", name: "Logistique" },
+            { id: "maintenance", name: "Maintenance" },
+            { id: "administration", name: "Administration" },
+            { id: "rh", name: "Ressources Humaines" },
+            { id: "commercial", name: "Commercial" },
+            { id: "finance", name: "Finances" },
+            { id: "achats", name: "Achats" }
+        ];
         
         // Références aux éléments DOM
         const loginContainer = document.getElementById('loginContainer');
@@ -1648,11 +1485,6 @@
         let isEditingAbsence = false;
         let currentImportType = null;
         
-        // Données globales (chargées depuis localStorage)
-        let employees = [];
-        let absences = [];
-        let departments = [];
-        
         // Fonction pour obtenir le nom complet d'un employé
         function getFullName(employee) {
             return `${employee.prenom} ${employee.nom}`;
@@ -1682,12 +1514,6 @@
                 loginContainer.style.display = 'none';
                 dashboardContainer.style.display = 'block';
                 
-                // Initialiser la base de données
-                initializeDatabase();
-                
-                // Charger les données depuis localStorage
-                loadDataFromStorage();
-                
                 // Initialiser le tableau de bord
                 initializeDashboard();
             } else {
@@ -1695,13 +1521,6 @@
                 errorMessage.style.display = 'block';
             }
         });
-        
-        // Fonction pour charger les données depuis localStorage
-        function loadDataFromStorage() {
-            employees = getAllEmployees();
-            absences = getAllAbsences();
-            departments = getAllDepartments();
-        }
         
         // Fonction pour gérer la déconnexion
         logoutBtn.addEventListener('click', function() {
@@ -2551,8 +2370,8 @@
                                     updatedCount++;
                                 } else {
                                     // Ajouter un nouvel employé
-                                    const newId = getNextEmployeeId();
-                                    const newEmployee = {
+                                    const newId = employees.length > 0 ? Math.max(...employees.map(emp => emp.id)) + 1 : 1;
+                                    employees.push({
                                         id: newId,
                                         matricule: row.Matricule,
                                         civilite: row.Civilité || 'Monsieur',
@@ -2566,9 +2385,7 @@
                                         phone: row.Téléphone || '',
                                         adresse: row.Adresse || '',
                                         photo: null
-                                    };
-                                    employees.push(newEmployee);
-                                    addEmployee(newEmployee);
+                                    });
                                     importedCount++;
                                 }
                             } catch (error) {
@@ -2576,9 +2393,6 @@
                                 console.error(`Erreur à la ligne ${index + 2}:`, error);
                             }
                         });
-                        
-                        // Sauvegarder tous les employés
-                        saveAllEmployees(employees);
                         
                         // Mettre à jour l'affichage
                         displayEmployees();
@@ -2612,8 +2426,8 @@
                                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
                                 
                                 // Ajouter une nouvelle absence
-                                const newId = getNextAbsenceId();
-                                const newAbsence = {
+                                const newId = absences.length > 0 ? Math.max(...absences.map(abs => abs.id)) + 1 : 1;
+                                absences.push({
                                     id: newId,
                                     employeeId: employee.id,
                                     startDate: startDate,
@@ -2622,18 +2436,13 @@
                                     type: row.Type || 'Maladie',
                                     status: row.Statut || 'pending',
                                     notes: row.Notes || ''
-                                };
-                                absences.push(newAbsence);
-                                addAbsence(newAbsence);
+                                });
                                 importedCount++;
                             } catch (error) {
                                 errorCount++;
                                 console.error(`Erreur à la ligne ${index + 2}:`, error);
                             }
                         });
-                        
-                        // Sauvegarder toutes les absences
-                        saveAllAbsences(absences);
                         
                         // Mettre à jour l'affichage
                         applyFilters();
@@ -2782,7 +2591,7 @@
             currentEmployeeId = id;
             
             // Trouver l'employé
-            const employee = getEmployeeById(id);
+            const employee = employees.find(emp => emp.id === id);
             if (!employee) return;
             
             // Remplir le formulaire
@@ -2825,7 +2634,7 @@
             currentAbsenceId = id;
             
             // Trouver l'absence
-            const absence = getAbsenceById(id);
+            const absence = absences.find(abs => abs.id === id);
             if (!absence) return;
             
             // Remplir le formulaire
@@ -2847,24 +2656,18 @@
         window.deleteEmployee = function(id) {
             if (confirm("Êtes-vous sûr de vouloir supprimer cet employé ? Cette action est irréversible.")) {
                 // Vérifier si l'employé a des absences
-                const employeeAbsences = getAbsencesByEmployeeId(id);
+                const employeeAbsences = absences.filter(abs => abs.employeeId === id);
                 if (employeeAbsences.length > 0) {
                     if (!confirm("Cet employé a des absences enregistrées. Voulez-vous quand même le supprimer ? Ses absences seront également supprimées.")) {
                         return;
                     }
                     
                     // Supprimer les absences associées
-                    employeeAbsences.forEach(absence => {
-                        deleteAbsence(absence.id);
-                    });
+                    absences = absences.filter(abs => abs.employeeId !== id);
                 }
                 
                 // Supprimer l'employé
-                deleteEmployee(id);
-                
-                // Recharger les données depuis le stockage
-                employees = getAllEmployees();
-                absences = getAllAbsences();
+                employees = employees.filter(emp => emp.id !== id);
                 
                 // Mettre à jour l'affichage
                 displayEmployees();
@@ -2884,10 +2687,7 @@
         window.deleteAbsence = function(id) {
             if (confirm("Êtes-vous sûr de vouloir supprimer cette absence ?")) {
                 // Supprimer l'absence
-                deleteAbsence(id);
-                
-                // Recharger les données depuis le stockage
-                absences = getAllAbsences();
+                absences = absences.filter(abs => abs.id !== id);
                 
                 // Mettre à jour l'affichage
                 applyFilters();
@@ -2921,36 +2721,38 @@
             }
             
             // Vérifier si le matricule existe déjà (sauf en mode édition pour le même employé)
-            if (isMatriculeExists(matricule, isEditingEmployee ? id : null)) {
+            const existingEmployee = employees.find(emp => emp.matricule === matricule && emp.id !== id);
+            if (existingEmployee) {
                 showAlert(employeeAlert, "Ce matricule est déjà utilisé par un autre employé", "error");
                 return;
             }
             
             if (isEditingEmployee) {
                 // Mettre à jour l'employé existant
-                const updatedEmployee = {
-                    id: id,
-                    matricule,
-                    civilite,
-                    nom,
-                    prenom,
-                    department,
-                    position,
-                    hireDate,
-                    status,
-                    email: email || null,
-                    phone: phone || null,
-                    adresse: adresse || null,
-                    photo: photo || null
-                };
-                
-                if (updateEmployee(updatedEmployee)) {
+                const index = employees.findIndex(emp => emp.id === id);
+                if (index !== -1) {
+                    employees[index] = {
+                        ...employees[index],
+                        matricule,
+                        civilite,
+                        nom,
+                        prenom,
+                        department,
+                        position,
+                        hireDate,
+                        status,
+                        email: email || null,
+                        phone: phone || null,
+                        adresse: adresse || null,
+                        photo: photo || null
+                    };
+                    
                     showAlert(employeeAlert, "Employé modifié avec succès !", "success");
                 }
             } else {
                 // Ajouter un nouvel employé
-                const newId = getNextEmployeeId();
-                const newEmployee = {
+                const newId = employees.length > 0 ? Math.max(...employees.map(emp => emp.id)) + 1 : 1;
+                employees.push({
                     id: newId,
                     matricule,
                     civilite,
@@ -2964,14 +2766,10 @@
                     phone: phone || null,
                     adresse: adresse || null,
                     photo: photo || null
-                };
+                });
                 
-                addEmployee(newEmployee);
                 showAlert(employeeAlert, "Employé ajouté avec succès !", "success");
             }
-            
-            // Recharger les données depuis le stockage
-            employees = getAllEmployees();
             
             // Mettre à jour l'affichage
             displayEmployees();
@@ -3017,24 +2815,25 @@
             
             if (isEditingAbsence) {
                 // Mettre à jour l'absence existante
-                const updatedAbsence = {
-                    id: id,
-                    employeeId,
-                    startDate,
-                    endDate,
-                    duration: diffDays,
-                    type,
-                    status,
-                    notes: notes || ''
-                };
-                
-                if (updateAbsence(updatedAbsence)) {
+                const index = absences.findIndex(abs => abs.id === id);
+                if (index !== -1) {
+                    absences[index] = {
+                        ...absences[index],
+                        employeeId,
+                        startDate,
+                        endDate,
+                        duration: diffDays,
+                        type,
+                        status,
+                        notes: notes || ''
+                    };
+                    
                     showAlert(absenceAlert, "Absence modifiée avec succès !", "success");
                 }
             } else {
                 // Ajouter une nouvelle absence
-                const newId = getNextAbsenceId();
-                const newAbsence = {
+                const newId = absences.length > 0 ? Math.max(...absences.map(abs => abs.id)) + 1 : 1;
+                absences.push({
                     id: newId,
                     employeeId,
                     startDate,
@@ -3043,14 +2842,10 @@
                     type,
                     status,
                     notes: notes || ''
-                };
+                });
                 
-                addAbsence(newAbsence);
                 showAlert(absenceAlert, "Absence ajoutée avec succès !", "success");
             }
-            
-            // Recharger les données depuis le stockage
-            absences = getAllAbsences();
             
             // Mettre à jour l'affichage
             applyFilters();
@@ -3230,103 +3025,7 @@
         
         // Initialiser au chargement de la page
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialiser la base de données
-            initializeDatabase();
-            
-            // Charger quelques données de démonstration si la base de données est vide
-            const employees = getAllEmployees();
-            const absences = getAllAbsences();
-            
-            if (employees.length === 0) {
-                // Ajouter quelques employés de démonstration
-                const demoEmployees = [
-                    {
-                        id: getNextEmployeeId(),
-                        matricule: "EMP-001",
-                        civilite: "Monsieur",
-                        nom: "Dupont",
-                        prenom: "Jean",
-                        department: "production",
-                        position: "Ouvrier",
-                        hireDate: "2023-01-15",
-                        status: "actif",
-                        email: "jean.dupont@example.com",
-                        phone: "0123456789",
-                        adresse: "123 Rue de l'Usine",
-                        photo: null
-                    },
-                    {
-                        id: getNextEmployeeId(),
-                        matricule: "EMP-002",
-                        civilite: "Madame",
-                        nom: "Martin",
-                        prenom: "Marie",
-                        department: "qualite",
-                        position: "Responsable Qualité",
-                        hireDate: "2023-03-20",
-                        status: "actif",
-                        email: "marie.martin@example.com",
-                        phone: "0234567890",
-                        adresse: "456 Avenue de la Qualité",
-                        photo: null
-                    },
-                    {
-                        id: getNextEmployeeId(),
-                        matricule: "EMP-003",
-                        civilite: "Monsieur",
-                        nom: "Bernard",
-                        prenom: "Pierre",
-                        department: "logistique",
-                        position: "Chauffeur",
-                        hireDate: "2023-06-10",
-                        status: "actif",
-                        email: "pierre.bernard@example.com",
-                        phone: "0345678901",
-                        adresse: "789 Boulevard des Transports",
-                        photo: null
-                    }
-                ];
-                
-                demoEmployees.forEach(emp => addEmployee(emp));
-            }
-            
-            if (absences.length === 0) {
-                // Ajouter quelques absences de démonstration
-                const demoAbsences = [
-                    {
-                        id: getNextAbsenceId(),
-                        employeeId: 1,
-                        startDate: "2025-01-10",
-                        endDate: "2025-01-12",
-                        duration: 3,
-                        type: "Maladie",
-                        status: "justified",
-                        notes: "Grippe"
-                    },
-                    {
-                        id: getNextAbsenceId(),
-                        employeeId: 2,
-                        startDate: "2025-02-15",
-                        endDate: "2025-02-15",
-                        duration: 1,
-                        type: "Personnel",
-                        status: "justified",
-                        notes: "Rendez-vous médical"
-                    },
-                    {
-                        id: getNextAbsenceId(),
-                        employeeId: 3,
-                        startDate: "2025-03-05",
-                        endDate: "2025-03-10",
-                        duration: 6,
-                        type: "Congé annuel",
-                        status: "justified",
-                        notes: "Vacances"
-                    }
-                ];
-                
-                demoAbsences.forEach(abs => addAbsence(abs));
-            }
+            // Rien à faire ici car la page de connexion s'affiche par défaut
         });
     </script>
 </body>
