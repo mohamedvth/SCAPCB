@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* Tous les styles CSS restent exactement les mêmes */
+        /* Tous les styles CSS restent exactement les mêmes que précédemment */
         * {
             margin: 0;
             padding: 0;
@@ -915,11 +915,6 @@
                     Nom d'utilisateur ou mot de passe incorrect
                 </div>
             </form>
-            <div style="margin-top: 20px; font-size: 12px; color: #777;">
-                <p>Informations de connexion de démonstration:</p>
-                <p>Utilisateur: admin</p>
-                <p>Mot de passe: ****</p>
-            </div>
         </div>
     </div>
     
@@ -1062,15 +1057,16 @@
                     <h2><i class="fas fa-search"></i> Interprétation des Diagrammes</h2>
                     <div class="interpretation-box" id="interpretationBox">
                         <p><strong>Tendances actuelles :</strong></p>
-                        <p id="trendText">Chargement des données d'analyse...</p>
+                        <p id="trendText">Aucune donnée disponible. Ajoutez des employés et des absences pour voir les analyses.</p>
                         
                         <p><strong>Recommandations :</strong></p>
                         <ul id="recommendationsList">
-                            <li>Analyse des données en cours...</li>
+                            <li>Commencez par ajouter des employés via l'onglet "Liste des Employés"</li>
+                            <li>Ensuite, enregistrez des absences pour voir les analyses statistiques</li>
                         </ul>
                         
                         <p><strong>Départements à surveiller :</strong></p>
-                        <p id="departmentsToWatch">Analyse en cours...</p>
+                        <p id="departmentsToWatch">Aucune donnée disponible</p>
                     </div>
                 </div>
                 
@@ -1108,6 +1104,11 @@
                         </thead>
                         <tbody id="absenceTableBody">
                             <!-- Les données seront insérées ici par JavaScript -->
+                            <tr>
+                                <td colspan="9" style="text-align: center; padding: 30px; color: #777;">
+                                    Aucune absence enregistrée. Ajoutez la première absence.
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -1139,6 +1140,11 @@
                     </thead>
                     <tbody id="employeeTableBody">
                         <!-- Les données seront insérées ici par JavaScript -->
+                        <tr>
+                            <td colspan="11" style="text-align: center; padding: 30px; color: #777;">
+                                Aucun employé enregistré. Ajoutez le premier employé.
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -1147,8 +1153,8 @@
         <!-- Pied de page -->
         <div class="footer">
             <p>Système de Gestion des Absences - Le Phare de Cap Bon</p>
-            <p class="copyright">© Copyright 2025 par Hamada. Tous droits réservés.</p>
-            <p style="margin-top: 10px; font-size: 12px;">Version 1.0 - Protégé par utilisateur admin</p>
+            <p class="copyright">© Copyright 2025. Tous droits réservés.</p>
+            <p style="margin-top: 10px; font-size: 12px;">Version 1.0 - Base de données IndexedDB</p>
         </div>
     </div>
     
@@ -1276,6 +1282,7 @@
                 <div class="form-group">
                     <label for="absenceEmployee">Employé *</label>
                     <select id="absenceEmployee" required>
+                        <option value="">Sélectionnez un employé</option>
                         <!-- Les options seront chargées dynamiquement -->
                     </select>
                 </div>
@@ -1377,25 +1384,600 @@
     </div>
 
     <script>
-        // Données initiales vides
-        let employees = [];
-        let absences = [];
+        // ============================================
+        // BASE DE DONNÉES INDEXEDDB
+        // ============================================
+        
+        class AbsenceDB {
+            constructor() {
+                this.db = null;
+                this.dbName = 'AbsenceManagementDB';
+                this.dbVersion = 4;
+                
+                // Noms des stores (tables)
+                this.EMPLOYEES_STORE = 'employees';
+                this.ABSENCES_STORE = 'absences';
+                this.DEPARTMENTS_STORE = 'departments';
+                this.SETTINGS_STORE = 'settings';
+            }
+            
+            // Initialiser la base de données
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+                    
+                    request.onerror = (event) => {
+                        console.error('Erreur d\'ouverture de la base de données:', event.target.error);
+                        reject(event.target.error);
+                    };
+                    
+                    request.onsuccess = (event) => {
+                        this.db = event.target.result;
+                        console.log('Base de données initialisée avec succès');
+                        resolve(this.db);
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        const oldVersion = event.oldVersion;
+                        
+                        console.log(`Mise à jour de la base de données de la version ${oldVersion} à ${this.dbVersion}`);
+                        
+                        // Créer les stores si ils n'existent pas
+                        if (!db.objectStoreNames.contains(this.EMPLOYEES_STORE)) {
+                            const employeeStore = db.createObjectStore(this.EMPLOYEES_STORE, { 
+                                keyPath: 'id', 
+                                autoIncrement: true 
+                            });
+                            
+                            // Créer des index pour les recherches
+                            employeeStore.createIndex('matricule', 'matricule', { unique: true });
+                            employeeStore.createIndex('nom', 'nom', { unique: false });
+                            employeeStore.createIndex('prenom', 'prenom', { unique: false });
+                            employeeStore.createIndex('department', 'department', { unique: false });
+                            employeeStore.createIndex('status', 'status', { unique: false });
+                        }
+                        
+                        if (!db.objectStoreNames.contains(this.ABSENCES_STORE)) {
+                            const absenceStore = db.createObjectStore(this.ABSENCES_STORE, { 
+                                keyPath: 'id', 
+                                autoIncrement: true 
+                            });
+                            
+                            // Créer des index pour les recherches
+                            absenceStore.createIndex('employeeId', 'employeeId', { unique: false });
+                            absenceStore.createIndex('startDate', 'startDate', { unique: false });
+                            absenceStore.createIndex('endDate', 'endDate', { unique: false });
+                            absenceStore.createIndex('status', 'status', { unique: false });
+                            absenceStore.createIndex('type', 'type', { unique: false });
+                        }
+                        
+                        if (!db.objectStoreNames.contains(this.DEPARTMENTS_STORE)) {
+                            const departmentStore = db.createObjectStore(this.DEPARTMENTS_STORE, { 
+                                keyPath: 'id'
+                            });
+                            
+                            // Ajouter les départements par défaut
+                            const departments = [
+                                { id: "production", name: "Production" },
+                                { id: "qualite", name: "Qualité" },
+                                { id: "logistique", name: "Logistique" },
+                                { id: "maintenance", name: "Maintenance" },
+                                { id: "administration", name: "Administration" },
+                                { id: "rh", name: "Ressources Humaines" },
+                                { id: "commercial", name: "Commercial" },
+                                { id: "finance", name: "Finances" },
+                                { id: "achats", name: "Achats" }
+                            ];
+                            
+                            const transaction = event.target.transaction;
+                            const store = transaction.objectStore(this.DEPARTMENTS_STORE);
+                            
+                            departments.forEach(dept => {
+                                store.add(dept);
+                            });
+                        }
+                        
+                        if (!db.objectStoreNames.contains(this.SETTINGS_STORE)) {
+                            db.createObjectStore(this.SETTINGS_STORE, { 
+                                keyPath: 'key'
+                            });
+                        }
+                    };
+                });
+            }
+            
+            // Méthode générique pour exécuter une transaction
+            async executeTransaction(storeName, mode, operation) {
+                return new Promise((resolve, reject) => {
+                    if (!this.db) {
+                        reject(new Error('Base de données non initialisée'));
+                        return;
+                    }
+                    
+                    const transaction = this.db.transaction([storeName], mode);
+                    const store = transaction.objectStore(storeName);
+                    
+                    transaction.oncomplete = () => {
+                        resolve();
+                    };
+                    
+                    transaction.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                    
+                    operation(store, transaction);
+                });
+            }
+            
+            // ========== EMPLOYÉS ==========
+            
+            // Ajouter un employé
+            async addEmployee(employee) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.EMPLOYEES_STORE], 'readwrite');
+                    const store = transaction.objectStore(this.EMPLOYEES_STORE);
+                    
+                    const request = store.add(employee);
+                    
+                    request.onsuccess = (event) => {
+                        resolve(event.target.result); // Retourne l'ID généré
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // Mettre à jour un employé
+            async updateEmployee(employee) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.EMPLOYEES_STORE], 'readwrite');
+                    const store = transaction.objectStore(this.EMPLOYEES_STORE);
+                    
+                    const request = store.put(employee);
+                    
+                    request.onsuccess = () => {
+                        resolve(true);
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // Supprimer un employé
+            async deleteEmployee(id) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.EMPLOYEES_STORE], 'readwrite');
+                    const store = transaction.objectStore(this.EMPLOYEES_STORE);
+                    
+                    const request = store.delete(id);
+                    
+                    request.onsuccess = () => {
+                        resolve(true);
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // Obtenir un employé par ID
+            async getEmployeeById(id) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.EMPLOYEES_STORE], 'readonly');
+                    const store = transaction.objectStore(this.EMPLOYEES_STORE);
+                    
+                    const request = store.get(id);
+                    
+                    request.onsuccess = (event) => {
+                        resolve(event.target.result);
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // Obtenir tous les employés
+            async getAllEmployees() {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.EMPLOYEES_STORE], 'readonly');
+                    const store = transaction.objectStore(this.EMPLOYEES_STORE);
+                    
+                    const request = store.getAll();
+                    
+                    request.onsuccess = (event) => {
+                        resolve(event.target.result || []);
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // Rechercher un employé par matricule
+            async getEmployeeByMatricule(matricule) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.EMPLOYEES_STORE], 'readonly');
+                    const store = transaction.objectStore(this.EMPLOYEES_STORE);
+                    const index = store.index('matricule');
+                    
+                    const request = index.get(matricule);
+                    
+                    request.onsuccess = (event) => {
+                        resolve(event.target.result);
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // ========== ABSENCES ==========
+            
+            // Ajouter une absence
+            async addAbsence(absence) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.ABSENCES_STORE], 'readwrite');
+                    const store = transaction.objectStore(this.ABSENCES_STORE);
+                    
+                    const request = store.add(absence);
+                    
+                    request.onsuccess = (event) => {
+                        resolve(event.target.result); // Retourne l'ID généré
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // Mettre à jour une absence
+            async updateAbsence(absence) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.ABSENCES_STORE], 'readwrite');
+                    const store = transaction.objectStore(this.ABSENCES_STORE);
+                    
+                    const request = store.put(absence);
+                    
+                    request.onsuccess = () => {
+                        resolve(true);
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // Supprimer une absence
+            async deleteAbsence(id) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.ABSENCES_STORE], 'readwrite');
+                    const store = transaction.objectStore(this.ABSENCES_STORE);
+                    
+                    const request = store.delete(id);
+                    
+                    request.onsuccess = () => {
+                        resolve(true);
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // Obtenir une absence par ID
+            async getAbsenceById(id) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.ABSENCES_STORE], 'readonly');
+                    const store = transaction.objectStore(this.ABSENCES_STORE);
+                    
+                    const request = store.get(id);
+                    
+                    request.onsuccess = (event) => {
+                        resolve(event.target.result);
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // Obtenir toutes les absences
+            async getAllAbsences() {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.ABSENCES_STORE], 'readonly');
+                    const store = transaction.objectStore(this.ABSENCES_STORE);
+                    
+                    const request = store.getAll();
+                    
+                    request.onsuccess = (event) => {
+                        resolve(event.target.result || []);
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // Obtenir les absences par employé
+            async getAbsencesByEmployeeId(employeeId) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.ABSENCES_STORE], 'readonly');
+                    const store = transaction.objectStore(this.ABSENCES_STORE);
+                    const index = store.index('employeeId');
+                    
+                    const request = index.getAll(employeeId);
+                    
+                    request.onsuccess = (event) => {
+                        resolve(event.target.result || []);
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // ========== DÉPARTEMENTS ==========
+            
+            // Obtenir tous les départements
+            async getAllDepartments() {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.DEPARTMENTS_STORE], 'readonly');
+                    const store = transaction.objectStore(this.DEPARTMENTS_STORE);
+                    
+                    const request = store.getAll();
+                    
+                    request.onsuccess = (event) => {
+                        resolve(event.target.result || []);
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // Ajouter un département
+            async addDepartment(department) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.DEPARTMENTS_STORE], 'readwrite');
+                    const store = transaction.objectStore(this.DEPARTMENTS_STORE);
+                    
+                    const request = store.add(department);
+                    
+                    request.onsuccess = () => {
+                        resolve(true);
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // ========== STATISTIQUES ==========
+            
+            // Obtenir les statistiques d'absence
+            async getAbsenceStats(filters = {}) {
+                const absences = await this.getAllAbsences();
+                const employees = await this.getAllEmployees();
+                
+                let filteredAbsences = absences;
+                
+                // Appliquer les filtres
+                if (filters.year && filters.year !== 'all') {
+                    filteredAbsences = filteredAbsences.filter(abs => {
+                        const year = new Date(abs.startDate).getFullYear().toString();
+                        return year === filters.year;
+                    });
+                }
+                
+                if (filters.month && filters.month !== 'all') {
+                    filteredAbsences = filteredAbsences.filter(abs => {
+                        const month = (new Date(abs.startDate).getMonth() + 1).toString();
+                        return month === filters.month;
+                    });
+                }
+                
+                if (filters.department && filters.department !== 'all') {
+                    filteredAbsences = filteredAbsences.filter(abs => {
+                        const employee = employees.find(emp => emp.id === abs.employeeId);
+                        return employee && employee.department === filters.department;
+                    });
+                }
+                
+                if (filters.status && filters.status !== 'all') {
+                    filteredAbsences = filteredAbsences.filter(abs => abs.status === filters.status);
+                }
+                
+                // Calculer les statistiques
+                const total = filteredAbsences.length;
+                const justified = filteredAbsences.filter(abs => abs.status === 'justified').length;
+                const unjustified = filteredAbsences.filter(abs => abs.status === 'unjustified').length;
+                const pending = filteredAbsences.filter(abs => abs.status === 'pending').length;
+                
+                // Trouver le département le plus touché
+                const deptStats = {};
+                filteredAbsences.forEach(abs => {
+                    const employee = employees.find(emp => emp.id === abs.employeeId);
+                    if (employee) {
+                        if (!deptStats[employee.department]) {
+                            deptStats[employee.department] = { count: 0, duration: 0 };
+                        }
+                        deptStats[employee.department].count++;
+                        deptStats[employee.department].duration += abs.duration;
+                    }
+                });
+                
+                let mostAffectedDept = '-';
+                let maxDuration = 0;
+                
+                for (const deptId in deptStats) {
+                    if (deptStats[deptId].duration > maxDuration) {
+                        maxDuration = deptStats[deptId].duration;
+                        const departments = await this.getAllDepartments();
+                        const dept = departments.find(d => d.id === deptId);
+                        mostAffectedDept = dept ? dept.name : deptId;
+                    }
+                }
+                
+                // Statistiques par type
+                const typeStats = {};
+                filteredAbsences.forEach(abs => {
+                    if (!typeStats[abs.type]) {
+                        typeStats[abs.type] = 0;
+                    }
+                    typeStats[abs.type] += abs.duration;
+                });
+                
+                // Statistiques par mois
+                const monthlyStats = {};
+                if (filters.year && filters.year !== 'all') {
+                    for (let i = 1; i <= 12; i++) {
+                        monthlyStats[i] = 0;
+                    }
+                    
+                    filteredAbsences.forEach(abs => {
+                        const month = new Date(abs.startDate).getMonth() + 1;
+                        monthlyStats[month] += abs.duration;
+                    });
+                }
+                
+                return {
+                    total,
+                    justified,
+                    unjustified,
+                    pending,
+                    mostAffectedDept,
+                    deptStats,
+                    typeStats,
+                    monthlyStats,
+                    filteredAbsences
+                };
+            }
+            
+            // ========== UTILITAIRES ==========
+            
+            // Vérifier si un matricule existe déjà
+            async isMatriculeExists(matricule, excludeId = null) {
+                const employees = await this.getAllEmployees();
+                return employees.some(emp => 
+                    emp.matricule === matricule && 
+                    (excludeId === null || emp.id !== excludeId)
+                );
+            }
+            
+            // Vider toute la base de données (pour le débogage)
+            async clearDatabase() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.deleteDatabase(this.dbName);
+                    
+                    request.onsuccess = () => {
+                        console.log('Base de données supprimée');
+                        this.db = null;
+                        resolve(true);
+                    };
+                    
+                    request.onerror = (event) => {
+                        console.error('Erreur lors de la suppression de la base de données:', event.target.error);
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            // Sauvegarder la base de données dans un fichier
+            async exportDatabase() {
+                const data = {
+                    employees: await this.getAllEmployees(),
+                    absences: await this.getAllAbsences(),
+                    departments: await this.getAllDepartments(),
+                    exportDate: new Date().toISOString(),
+                    version: '1.0'
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sauvegarde_absences_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            
+            // Importer la base de données depuis un fichier
+            async importDatabase(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    
+                    reader.onload = async (event) => {
+                        try {
+                            const data = JSON.parse(event.target.result);
+                            
+                            // Vérifier la structure du fichier
+                            if (!data.employees || !data.absences || !data.departments) {
+                                throw new Error('Format de fichier invalide');
+                            }
+                            
+                            // Vider les stores existants
+                            await this.clearDatabase();
+                            
+                            // Réinitialiser la base de données
+                            await this.init();
+                            
+                            // Importer les départements
+                            for (const dept of data.departments) {
+                                await this.addDepartment(dept);
+                            }
+                            
+                            // Importer les employés
+                            for (const emp of data.employees) {
+                                await this.addEmployee(emp);
+                            }
+                            
+                            // Importer les absences
+                            for (const abs of data.absences) {
+                                await this.addAbsence(abs);
+                            }
+                            
+                            resolve(true);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+                    
+                    reader.onerror = (event) => {
+                        reject(new Error('Erreur de lecture du fichier'));
+                    };
+                    
+                    reader.readAsText(file);
+                });
+            }
+        }
+        
+        // ============================================
+        // FIN DE LA BASE DE DONNÉES INDEXEDDB
+        // ============================================
 
         // Données pour les mois
         const months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juill", "Août", "Sept", "Oct", "Nov", "Déc"];
-        
-        // Liste des départements
-        const departments = [
-            { id: "production", name: "Production" },
-            { id: "qualite", name: "Qualité" },
-            { id: "logistique", name: "Logistique" },
-            { id: "maintenance", name: "Maintenance" },
-            { id: "administration", name: "Administration" },
-            { id: "rh", name: "Ressources Humaines" },
-            { id: "commercial", name: "Commercial" },
-            { id: "finance", name: "Finances" },
-            { id: "achats", name: "Achats" }
-        ];
         
         // Références aux éléments DOM
         const loginContainer = document.getElementById('loginContainer');
@@ -1485,6 +2067,14 @@
         let isEditingAbsence = false;
         let currentImportType = null;
         
+        // Données globales
+        let employees = [];
+        let absences = [];
+        let departments = [];
+        
+        // Instance de la base de données
+        const db = new AbsenceDB();
+        
         // Fonction pour obtenir le nom complet d'un employé
         function getFullName(employee) {
             return `${employee.prenom} ${employee.nom}`;
@@ -1503,7 +2093,7 @@
         }
         
         // Fonction pour gérer la connexion
-        loginForm.addEventListener('submit', function(e) {
+        loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const username = document.getElementById('username').value;
@@ -1514,13 +2104,38 @@
                 loginContainer.style.display = 'none';
                 dashboardContainer.style.display = 'block';
                 
-                // Initialiser le tableau de bord
-                initializeDashboard();
+                try {
+                    // Initialiser la base de données
+                    await db.init();
+                    
+                    // Charger les données
+                    await loadDataFromDatabase();
+                    
+                    // Initialiser le tableau de bord
+                    initializeDashboard();
+                } catch (error) {
+                    console.error('Erreur lors de l\'initialisation:', error);
+                    showAlert(employeeAlert, "Erreur lors du chargement des données. Veuillez rafraîchir la page.", "error");
+                }
             } else {
                 // Afficher un message d'erreur
                 errorMessage.style.display = 'block';
             }
         });
+        
+        // Fonction pour charger les données depuis la base de données
+        async function loadDataFromDatabase() {
+            try {
+                employees = await db.getAllEmployees();
+                absences = await db.getAllAbsences();
+                departments = await db.getAllDepartments();
+                
+                console.log(`Données chargées: ${employees.length} employés, ${absences.length} absences`);
+            } catch (error) {
+                console.error('Erreur lors du chargement des données:', error);
+                throw error;
+            }
+        }
         
         // Fonction pour gérer la déconnexion
         logoutBtn.addEventListener('click', function() {
@@ -1654,50 +2269,37 @@
         }
         
         // Fonction pour appliquer les filtres
-        function applyFilters() {
+        async function applyFilters() {
             const selectedDept = departmentFilter.value;
             const selectedMonth = monthFilter.value;
             const selectedYear = yearFilter.value;
             const selectedStatus = statusFilter.value;
             
-            // Filtrer les données
-            let filteredData = absences.filter(item => {
-                // Obtenir l'employé correspondant
-                const employee = employees.find(emp => emp.id === item.employeeId);
-                if (!employee) return false;
+            try {
+                // Obtenir les statistiques avec filtres
+                const stats = await db.getAbsenceStats({
+                    department: selectedDept,
+                    month: selectedMonth,
+                    year: selectedYear,
+                    status: selectedStatus
+                });
                 
-                // Filtrer par année
-                const itemYear = new Date(item.startDate).getFullYear().toString();
-                if (selectedYear !== "all" && itemYear !== selectedYear) return false;
+                // Mettre à jour le tableau
+                updateAbsenceTable(stats.filteredAbsences);
                 
-                // Filtrer par mois
-                if (selectedMonth !== "all") {
-                    const itemMonth = new Date(item.startDate).getMonth() + 1;
-                    if (itemMonth.toString() !== selectedMonth) return false;
-                }
+                // Mettre à jour les cartes de résumé
+                updateSummaryCards(stats);
                 
-                // Filtrer par département
-                if (selectedDept !== "all" && employee.department !== selectedDept) return false;
+                // Mettre à jour les graphiques
+                updateChart(stats);
+                updateDepartmentChart(stats);
+                updateTypeChart(stats);
                 
-                // Filtrer par statut
-                if (selectedStatus !== "all" && item.status !== selectedStatus) return false;
-                
-                return true;
-            });
-            
-            // Mettre à jour le tableau
-            updateAbsenceTable(filteredData);
-            
-            // Mettre à jour les cartes de résumé
-            updateSummaryCards(filteredData);
-            
-            // Mettre à jour les graphiques
-            updateChart(filteredData);
-            updateDepartmentChart(filteredData);
-            updateTypeChart(filteredData);
-            
-            // Mettre à jour l'interprétation
-            updateInterpretation(filteredData);
+                // Mettre à jour l'interprétation
+                updateInterpretation(stats);
+            } catch (error) {
+                console.error('Erreur lors de l\'application des filtres:', error);
+            }
         }
         
         // Fonction pour mettre à jour le tableau des absences
@@ -1836,71 +2438,20 @@
         }
         
         // Fonction pour mettre à jour les cartes de résumé
-        function updateSummaryCards(data) {
-            const total = data.length;
-            const justified = data.filter(item => item.status === 'justified').length;
-            const unjustified = data.filter(item => item.status === 'unjustified').length;
-            
-            // Trouver le département le plus touché
-            const deptCounts = {};
-            data.forEach(item => {
-                const employee = employees.find(emp => emp.id === item.employeeId);
-                if (employee) {
-                    if (deptCounts[employee.department]) {
-                        deptCounts[employee.department] += item.duration;
-                    } else {
-                        deptCounts[employee.department] = item.duration;
-                    }
-                }
-            });
-            
-            let mostAffectedDept = '-';
-            let maxDuration = 0;
-            
-            for (const deptId in deptCounts) {
-                if (deptCounts[deptId] > maxDuration) {
-                    maxDuration = deptCounts[deptId];
-                    const dept = departments.find(d => d.id === deptId);
-                    mostAffectedDept = dept ? dept.name : deptId;
-                }
-            }
-            
-            // Mettre à jour les éléments
-            totalAbsencesElement.textContent = total;
-            justifiedAbsencesElement.textContent = justified;
-            unjustifiedAbsencesElement.textContent = unjustified;
-            mostAffectedDeptElement.textContent = mostAffectedDept;
+        function updateSummaryCards(stats) {
+            totalAbsencesElement.textContent = stats.total;
+            justifiedAbsencesElement.textContent = stats.justified;
+            unjustifiedAbsencesElement.textContent = stats.unjustified;
+            mostAffectedDeptElement.textContent = stats.mostAffectedDept;
         }
         
         // Fonction pour mettre à jour le graphique linéaire
-        function updateChart(data) {
+        function updateChart(stats) {
             const ctx = document.getElementById('absenceChart').getContext('2d');
-            
-            // Grouper les données par mois
-            const monthlyData = {};
-            const currentYear = yearFilter.value;
-            
-            // Initialiser tous les mois à 0
-            months.forEach((month, index) => {
-                monthlyData[index + 1] = 0;
-            });
-            
-            // Compter les absences par mois
-            data.forEach(item => {
-                const month = new Date(item.startDate).getMonth() + 1;
-                const year = new Date(item.startDate).getFullYear();
-                
-                // Ne prendre en compte que l'année sélectionnée
-                if (year.toString() === currentYear) {
-                    if (monthlyData[month] !== undefined) {
-                        monthlyData[month]++;
-                    }
-                }
-            });
             
             // Préparer les données pour le graphique
             const chartLabels = months;
-            const chartData = Object.values(monthlyData);
+            const chartData = Object.values(stats.monthlyStats);
             
             // Si un graphique existe déjà, le détruire
             if (absenceChart) {
@@ -1913,7 +2464,7 @@
                 data: {
                     labels: chartLabels,
                     datasets: [{
-                        label: 'Nombre d\'absences',
+                        label: 'Jours d\'absence',
                         data: chartData,
                         backgroundColor: 'rgba(42, 93, 143, 0.2)',
                         borderColor: 'rgba(42, 93, 143, 1)',
@@ -1946,33 +2497,16 @@
         }
         
         // Fonction pour mettre à jour le diagramme à barres verticales
-        function updateDepartmentChart(data) {
+        function updateDepartmentChart(stats) {
             const ctx = document.getElementById('departmentChart').getContext('2d');
             
-            // Grouper les données par département
-            const deptData = {};
-            
-            // Initialiser tous les départements à 0
-            departments.forEach(dept => {
-                deptData[dept.id] = { name: dept.name, count: 0, duration: 0 };
-            });
-            
-            // Compter les absences par département
-            data.forEach(item => {
-                const employee = employees.find(emp => emp.id === item.employeeId);
-                if (employee && deptData[employee.department]) {
-                    deptData[employee.department].count++;
-                    deptData[employee.department].duration += item.duration;
-                }
-            });
-            
-            // Filtrer les départements qui ont des données
-            const filteredDepts = departments.filter(dept => deptData[dept.id].count > 0);
-            
             // Préparer les données pour le graphique
-            const chartLabels = filteredDepts.map(dept => dept.name);
-            const chartData = filteredDepts.map(dept => deptData[dept.id].count);
-            const durationData = filteredDepts.map(dept => deptData[dept.id].duration);
+            const chartLabels = Object.keys(stats.deptStats).map(deptId => {
+                const dept = departments.find(d => d.id === deptId);
+                return dept ? dept.name : deptId;
+            });
+            
+            const chartData = Object.values(stats.deptStats).map(dept => dept.duration);
             
             // Palette de couleurs pour les barres
             const backgroundColors = [
@@ -1998,7 +2532,7 @@
                 data: {
                     labels: chartLabels,
                     datasets: [{
-                        label: 'Nombre d\'absences',
+                        label: 'Jours d\'absence',
                         data: chartData,
                         backgroundColor: backgroundColors.slice(0, chartLabels.length),
                         borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
@@ -2014,9 +2548,14 @@
                         tooltip: {
                             callbacks: {
                                 afterLabel: function(context) {
-                                    const deptId = departments.find(d => d.name === context.label)?.id;
-                                    if (deptId && deptData[deptId]) {
-                                        return `Durée totale: ${deptData[deptId].duration} jours`;
+                                    const deptName = context.label;
+                                    const deptId = Object.keys(stats.deptStats).find(key => {
+                                        const dept = departments.find(d => d.id === key);
+                                        return dept ? dept.name === deptName : key === deptName;
+                                    });
+                                    
+                                    if (deptId && stats.deptStats[deptId]) {
+                                        return `Nombre d'absences: ${stats.deptStats[deptId].count}`;
                                     }
                                     return '';
                                 }
@@ -2036,24 +2575,12 @@
         }
         
         // Fonction pour mettre à jour le diagramme circulaire
-        function updateTypeChart(data) {
+        function updateTypeChart(stats) {
             const ctx = document.getElementById('typeChart').getContext('2d');
             
-            // Grouper les données par type d'absence
-            const typeData = {};
-            
-            // Compter les absences par type
-            data.forEach(item => {
-                if (typeData[item.type]) {
-                    typeData[item.type]++;
-                } else {
-                    typeData[item.type] = 1;
-                }
-            });
-            
             // Préparer les données pour le graphique
-            const chartLabels = Object.keys(typeData);
-            const chartData = Object.values(typeData);
+            const chartLabels = Object.keys(stats.typeStats);
+            const chartData = Object.values(stats.typeStats);
             
             // Palette de couleurs pour le diagramme circulaire
             const backgroundColors = [
@@ -2098,8 +2625,8 @@
                                     const label = context.label || '';
                                     const value = context.raw || 0;
                                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = Math.round((value / total) * 100);
-                                    return `${label}: ${value} (${percentage}%)`;
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ${value} jours (${percentage}%)`;
                                 }
                             }
                         }
@@ -2109,46 +2636,21 @@
         }
         
         // Fonction pour mettre à jour l'interprétation
-        function updateInterpretation(data) {
-            if (data.length === 0) {
-                trendText.textContent = "Aucune donnée d'absence pour les filtres sélectionnés.";
-                recommendationsList.innerHTML = "<li>Aucune recommandation possible sans données</li>";
-                departmentsToWatch.textContent = "Aucun département à signaler";
+        function updateInterpretation(stats) {
+            if (stats.total === 0) {
+                trendText.textContent = "Aucune donnée d'absence pour les filtres sélectionnés. Commencez par ajouter des employés et enregistrer leurs absences.";
+                recommendationsList.innerHTML = `
+                    <li>Ajoutez des employés via l'onglet "Liste des Employés"</li>
+                    <li>Enregistrez des absences pour voir les analyses statistiques</li>
+                    <li>Utilisez la fonction d'importation Excel pour ajouter plusieurs données à la fois</li>
+                `;
+                departmentsToWatch.textContent = "Aucune donnée disponible";
                 return;
             }
             
-            // Calculer les statistiques
-            const total = data.length;
-            const justified = data.filter(item => item.status === 'justified').length;
-            const unjustified = data.filter(item => item.status === 'unjustified').length;
-            const pending = data.filter(item => item.status === 'pending').length;
-            
-            const justifiedPercentage = total > 0 ? Math.round((justified / total) * 100) : 0;
-            const unjustifiedPercentage = total > 0 ? Math.round((unjustified / total) * 100) : 0;
-            
-            // Trouver le département avec le plus d'absences
-            const deptCounts = {};
-            data.forEach(item => {
-                const employee = employees.find(emp => emp.id === item.employeeId);
-                if (employee) {
-                    if (deptCounts[employee.department]) {
-                        deptCounts[employee.department]++;
-                    } else {
-                        deptCounts[employee.department] = 1;
-                    }
-                }
-            });
-            
-            let mostAffectedDept = '';
-            let maxCount = 0;
-            
-            for (const deptId in deptCounts) {
-                if (deptCounts[deptId] > maxCount) {
-                    maxCount = deptCounts[deptId];
-                    const dept = departments.find(d => d.id === deptId);
-                    mostAffectedDept = dept ? dept.name : deptId;
-                }
-            }
+            // Calculer les pourcentages
+            const justifiedPercentage = stats.total > 0 ? Math.round((stats.justified / stats.total) * 100) : 0;
+            const unjustifiedPercentage = stats.total > 0 ? Math.round((stats.unjustified / stats.total) * 100) : 0;
             
             // Générer le texte de tendance
             let trend = "";
@@ -2161,14 +2663,15 @@
                 trend = `Taux d'absences dans les normes (${justifiedPercentage}% justifiées, ${unjustifiedPercentage}% non justifiées).`;
             }
             
-            trendText.textContent = trend;
+            const totalDays = stats.filteredAbsences.reduce((sum, abs) => sum + abs.duration, 0);
+            trendText.textContent = `${trend} Total: ${stats.total} absences, ${totalDays} jours.`;
             
             // Générer les recommandations
             recommendationsList.innerHTML = "";
             
             if (unjustifiedPercentage > 20) {
                 const li1 = document.createElement('li');
-                li1.textContent = "Rencontrer les employés du département " + mostAffectedDept + " pour comprendre les raisons des absences non justifiées.";
+                li1.textContent = "Rencontrer les employés du département " + stats.mostAffectedDept + " pour comprendre les raisons des absences non justifiées.";
                 recommendationsList.appendChild(li1);
                 
                 const li2 = document.createElement('li');
@@ -2176,26 +2679,25 @@
                 recommendationsList.appendChild(li2);
             }
             
-            if (pending > 0) {
+            if (stats.pending > 0) {
                 const li3 = document.createElement('li');
-                li3.textContent = `${pending} absences sont en attente de validation. Traiter ces demandes rapidement pour une meilleure gestion.`;
+                li3.textContent = `${stats.pending} absences sont en attente de validation. Traiter ces demandes rapidement pour une meilleure gestion.`;
                 recommendationsList.appendChild(li3);
             }
             
-            if (total > 10) {
+            if (stats.total > 10) {
                 const li4 = document.createElement('li');
                 li4.textContent = "Organiser une session de sensibilisation sur l'importance de l'assiduité au travail.";
                 recommendationsList.appendChild(li4);
             }
             
             // Départements à surveiller
-            let deptsToWatch = [];
-            for (const deptId in deptCounts) {
-                if (deptCounts[deptId] > 2) {
+            const deptsToWatch = Object.entries(stats.deptStats)
+                .filter(([deptId, deptData]) => deptData.duration > 5)
+                .map(([deptId, deptData]) => {
                     const dept = departments.find(d => d.id === deptId);
-                    deptsToWatch.push(dept ? dept.name : deptId);
-                }
-            }
+                    return dept ? dept.name : deptId;
+                });
             
             if (deptsToWatch.length > 0) {
                 departmentsToWatch.textContent = deptsToWatch.join(", ");
@@ -2244,15 +2746,15 @@
             });
             
             // Gérer la soumission du formulaire d'employé
-            employeeForm.addEventListener('submit', (e) => {
+            employeeForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                saveEmployee();
+                await saveEmployee();
             });
             
             // Gérer la soumission du formulaire d'absence
-            absenceForm.addEventListener('submit', (e) => {
+            absenceForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                saveAbsence();
+                await saveAbsence();
             });
         }
         
@@ -2314,7 +2816,7 @@
         }
         
         // Fonction pour traiter l'importation
-        function processImport() {
+        async function processImport() {
             const file = importFileInput.files[0];
             if (!file) {
                 showAlert(importAlert, "Veuillez sélectionner un fichier Excel", "error");
@@ -2327,7 +2829,7 @@
             }
             
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
@@ -2340,21 +2842,21 @@
                     
                     if (currentImportType === 'employees') {
                         // Importer des employés
-                        jsonData.forEach((row, index) => {
+                        for (const row of jsonData) {
                             try {
                                 // Vérifier les données minimales
                                 if (!row.Matricule || !row.Nom || !row.Prénom) {
                                     errorCount++;
-                                    return;
+                                    continue;
                                 }
                                 
                                 // Vérifier si l'employé existe déjà
-                                const existingIndex = employees.findIndex(emp => emp.matricule === row.Matricule);
+                                const existingEmployee = await db.getEmployeeByMatricule(row.Matricule);
                                 
-                                if (existingIndex !== -1) {
+                                if (existingEmployee) {
                                     // Mettre à jour l'employé existant
-                                    employees[existingIndex] = {
-                                        ...employees[existingIndex],
+                                    const updatedEmployee = {
+                                        ...existingEmployee,
                                         matricule: row.Matricule,
                                         civilite: row.Civilité || 'Monsieur',
                                         nom: row.Nom,
@@ -2367,12 +2869,12 @@
                                         phone: row.Téléphone || '',
                                         adresse: row.Adresse || ''
                                     };
+                                    
+                                    await db.updateEmployee(updatedEmployee);
                                     updatedCount++;
                                 } else {
                                     // Ajouter un nouvel employé
-                                    const newId = employees.length > 0 ? Math.max(...employees.map(emp => emp.id)) + 1 : 1;
-                                    employees.push({
-                                        id: newId,
+                                    const newEmployee = {
                                         matricule: row.Matricule,
                                         civilite: row.Civilité || 'Monsieur',
                                         nom: row.Nom,
@@ -2385,36 +2887,42 @@
                                         phone: row.Téléphone || '',
                                         adresse: row.Adresse || '',
                                         photo: null
-                                    });
+                                    };
+                                    
+                                    await db.addEmployee(newEmployee);
                                     importedCount++;
                                 }
                             } catch (error) {
                                 errorCount++;
-                                console.error(`Erreur à la ligne ${index + 2}:`, error);
+                                console.error('Erreur lors de l\'importation d\'un employé:', error);
                             }
-                        });
+                        }
+                        
+                        // Recharger les données
+                        await loadDataFromDatabase();
                         
                         // Mettre à jour l'affichage
                         displayEmployees();
                         loadEmployeesForAbsences();
+                        applyFilters();
                         
                         showAlert(importAlert, `${importedCount} employé(s) importé(s), ${updatedCount} mis à jour, ${errorCount} erreur(s)`, "success");
                         
                     } else if (currentImportType === 'absences') {
                         // Importer des absences
-                        jsonData.forEach((row, index) => {
+                        for (const row of jsonData) {
                             try {
                                 // Vérifier les données minimales
                                 if (!row.Matricule || !row['Date de début'] || !row['Date de fin']) {
                                     errorCount++;
-                                    return;
+                                    continue;
                                 }
                                 
                                 // Trouver l'employé par matricule
-                                const employee = employees.find(emp => emp.matricule === row.Matricule);
+                                const employee = await db.getEmployeeByMatricule(row.Matricule);
                                 if (!employee) {
                                     errorCount++;
-                                    return;
+                                    continue;
                                 }
                                 
                                 // Calculer la durée
@@ -2426,9 +2934,7 @@
                                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
                                 
                                 // Ajouter une nouvelle absence
-                                const newId = absences.length > 0 ? Math.max(...absences.map(abs => abs.id)) + 1 : 1;
-                                absences.push({
-                                    id: newId,
+                                const newAbsence = {
                                     employeeId: employee.id,
                                     startDate: startDate,
                                     endDate: endDate,
@@ -2436,13 +2942,18 @@
                                     type: row.Type || 'Maladie',
                                     status: row.Statut || 'pending',
                                     notes: row.Notes || ''
-                                });
+                                };
+                                
+                                await db.addAbsence(newAbsence);
                                 importedCount++;
                             } catch (error) {
                                 errorCount++;
-                                console.error(`Erreur à la ligne ${index + 2}:`, error);
+                                console.error('Erreur lors de l\'importation d\'une absence:', error);
                             }
-                        });
+                        }
+                        
+                        // Recharger les données
+                        await loadDataFromDatabase();
                         
                         // Mettre à jour l'affichage
                         applyFilters();
@@ -2492,7 +3003,7 @@
         function downloadEmployeeTemplate() {
             const templateData = [
                 ["Matricule", "Civilité", "Nom", "Prénom", "Département", "Poste", "Date d'Embauche", "Statut", "Email", "Téléphone", "Adresse"],
-                ["EMP-001", "Monsieur", "Exemple", "Jean", "Production", "Ouvrier", "2024-01-15", "actif", "jean.exemple@example.com", "0123456789", "Adresse exemple"]
+                ["EMP001", "Monsieur", "", "", "Production", "", "2024-01-15", "actif", "", "", ""]
             ];
             
             const wb = XLSX.utils.book_new();
@@ -2506,7 +3017,7 @@
         function downloadAbsenceTemplate() {
             const templateData = [
                 ["Matricule", "Date de début", "Date de fin", "Type", "Statut", "Notes"],
-                ["EMP-001", "2025-04-01", "2025-04-03", "Maladie", "justified", "Exemple de notes"]
+                ["EMP001", "2025-01-01", "2025-01-03", "Maladie", "justified", ""]
             ];
             
             const wb = XLSX.utils.book_new();
@@ -2564,10 +3075,16 @@
             
             // Générer un matricule automatique
             const lastEmployee = employees[employees.length - 1];
-            let nextMatricule = "EMP-001";
+            let nextMatricule = "EMP001";
             if (lastEmployee && lastEmployee.matricule) {
-                const lastNumber = parseInt(lastEmployee.matricule.split('-')[1]);
-                nextMatricule = `EMP-${String(lastNumber + 1).padStart(3, '0')}`;
+                const match = lastEmployee.matricule.match(/(\D+)(\d+)/);
+                if (match) {
+                    const prefix = match[1];
+                    const lastNumber = parseInt(match[2]);
+                    nextMatricule = `${prefix}${String(lastNumber + 1).padStart(3, '0')}`;
+                } else {
+                    nextMatricule = `EMP${String(employees.length + 1).padStart(3, '0')}`;
+                }
             }
             document.getElementById('employeeMatricule').value = nextMatricule;
         }
@@ -2586,121 +3103,149 @@
         }
         
         // Fonction pour éditer un employé
-        window.editEmployee = function(id) {
+        window.editEmployee = async function(id) {
             isEditingEmployee = true;
             currentEmployeeId = id;
             
-            // Trouver l'employé
-            const employee = employees.find(emp => emp.id === id);
-            if (!employee) return;
-            
-            // Remplir le formulaire
-            document.getElementById('employeeId').value = employee.id;
-            document.getElementById('employeeMatricule').value = employee.matricule;
-            document.getElementById('employeeCivilite').value = employee.civilite;
-            document.getElementById('employeeNom').value = employee.nom;
-            document.getElementById('employeePrenom').value = employee.prenom;
-            document.getElementById('employeeDepartment').value = employee.department;
-            document.getElementById('employeePosition').value = employee.position;
-            document.getElementById('employeeHireDate').value = employee.hireDate;
-            document.getElementById('employeeStatus').value = employee.status;
-            document.getElementById('employeeEmail').value = employee.email || '';
-            document.getElementById('employeePhone').value = employee.phone || '';
-            document.getElementById('employeeAdresse').value = employee.adresse || '';
-            
-            // Gérer la photo
-            if (employee.photo) {
-                employeePhotoPreview.src = employee.photo;
-                employeePhotoPreview.style.display = 'block';
-                employeePhotoPlaceholder.style.display = 'none';
-                employeePhotoHidden.value = employee.photo;
-                removePhotoBtn.style.display = 'block';
-            } else {
-                employeePhotoPreview.style.display = 'none';
-                employeePhotoPlaceholder.style.display = 'flex';
-                employeePhotoHidden.value = '';
-                removePhotoBtn.style.display = 'none';
+            try {
+                // Trouver l'employé
+                const employee = await db.getEmployeeById(id);
+                if (!employee) return;
+                
+                // Remplir le formulaire
+                document.getElementById('employeeId').value = employee.id;
+                document.getElementById('employeeMatricule').value = employee.matricule;
+                document.getElementById('employeeCivilite').value = employee.civilite;
+                document.getElementById('employeeNom').value = employee.nom;
+                document.getElementById('employeePrenom').value = employee.prenom;
+                document.getElementById('employeeDepartment').value = employee.department;
+                document.getElementById('employeePosition').value = employee.position;
+                document.getElementById('employeeHireDate').value = employee.hireDate;
+                document.getElementById('employeeStatus').value = employee.status;
+                document.getElementById('employeeEmail').value = employee.email || '';
+                document.getElementById('employeePhone').value = employee.phone || '';
+                document.getElementById('employeeAdresse').value = employee.adresse || '';
+                
+                // Gérer la photo
+                if (employee.photo) {
+                    employeePhotoPreview.src = employee.photo;
+                    employeePhotoPreview.style.display = 'block';
+                    employeePhotoPlaceholder.style.display = 'none';
+                    employeePhotoHidden.value = employee.photo;
+                    removePhotoBtn.style.display = 'block';
+                } else {
+                    employeePhotoPreview.style.display = 'none';
+                    employeePhotoPlaceholder.style.display = 'flex';
+                    employeePhotoHidden.value = '';
+                    removePhotoBtn.style.display = 'none';
+                }
+                
+                // Afficher le modal
+                employeeModalTitle.textContent = "Modifier l'Employé";
+                employeeModal.style.display = 'flex';
+                employeeAlert.style.display = 'none';
+            } catch (error) {
+                console.error('Erreur lors de l\'édition de l\'employé:', error);
+                showAlert(employeeAlert, "Erreur lors du chargement de l'employé", "error");
             }
-            
-            // Afficher le modal
-            employeeModalTitle.textContent = "Modifier l'Employé";
-            employeeModal.style.display = 'flex';
-            employeeAlert.style.display = 'none';
         };
         
         // Fonction pour éditer une absence
-        window.editAbsence = function(id) {
+        window.editAbsence = async function(id) {
             isEditingAbsence = true;
             currentAbsenceId = id;
             
-            // Trouver l'absence
-            const absence = absences.find(abs => abs.id === id);
-            if (!absence) return;
-            
-            // Remplir le formulaire
-            document.getElementById('absenceId').value = absence.id;
-            document.getElementById('absenceEmployee').value = absence.employeeId;
-            document.getElementById('absenceStartDate').value = absence.startDate;
-            document.getElementById('absenceEndDate').value = absence.endDate;
-            document.getElementById('absenceType').value = absence.type;
-            document.getElementById('absenceStatus').value = absence.status;
-            document.getElementById('absenceNotes').value = absence.notes || '';
-            
-            // Afficher le modal
-            absenceModalTitle.textContent = "Modifier l'Absence";
-            absenceModal.style.display = 'flex';
-            absenceAlert.style.display = 'none';
+            try {
+                // Trouver l'absence
+                const absence = await db.getAbsenceById(id);
+                if (!absence) return;
+                
+                // Remplir le formulaire
+                document.getElementById('absenceId').value = absence.id;
+                document.getElementById('absenceEmployee').value = absence.employeeId;
+                document.getElementById('absenceStartDate').value = absence.startDate;
+                document.getElementById('absenceEndDate').value = absence.endDate;
+                document.getElementById('absenceType').value = absence.type;
+                document.getElementById('absenceStatus').value = absence.status;
+                document.getElementById('absenceNotes').value = absence.notes || '';
+                
+                // Afficher le modal
+                absenceModalTitle.textContent = "Modifier l'Absence";
+                absenceModal.style.display = 'flex';
+                absenceAlert.style.display = 'none';
+            } catch (error) {
+                console.error('Erreur lors de l\'édition de l\'absence:', error);
+                showAlert(absenceAlert, "Erreur lors du chargement de l'absence", "error");
+            }
         };
         
         // Fonction pour supprimer un employé
-        window.deleteEmployee = function(id) {
+        window.deleteEmployee = async function(id) {
             if (confirm("Êtes-vous sûr de vouloir supprimer cet employé ? Cette action est irréversible.")) {
-                // Vérifier si l'employé a des absences
-                const employeeAbsences = absences.filter(abs => abs.employeeId === id);
-                if (employeeAbsences.length > 0) {
-                    if (!confirm("Cet employé a des absences enregistrées. Voulez-vous quand même le supprimer ? Ses absences seront également supprimées.")) {
-                        return;
+                try {
+                    // Vérifier si l'employé a des absences
+                    const employeeAbsences = await db.getAbsencesByEmployeeId(id);
+                    if (employeeAbsences.length > 0) {
+                        if (!confirm("Cet employé a des absences enregistrées. Voulez-vous quand même le supprimer ? Ses absences seront également supprimées.")) {
+                            return;
+                        }
+                        
+                        // Supprimer les absences associées
+                        for (const absence of employeeAbsences) {
+                            await db.deleteAbsence(absence.id);
+                        }
                     }
                     
-                    // Supprimer les absences associées
-                    absences = absences.filter(abs => abs.employeeId !== id);
+                    // Supprimer l'employé
+                    await db.deleteEmployee(id);
+                    
+                    // Recharger les données
+                    await loadDataFromDatabase();
+                    
+                    // Mettre à jour l'affichage
+                    displayEmployees();
+                    
+                    // Mettre à jour les filtres d'absences
+                    loadEmployeesForAbsences();
+                    
+                    // Recalculer les statistiques
+                    applyFilters();
+                    
+                    // Afficher un message de confirmation
+                    showAlert(employeeAlert, "Employé supprimé avec succès !", "success");
+                } catch (error) {
+                    console.error('Erreur lors de la suppression de l\'employé:', error);
+                    showAlert(employeeAlert, "Erreur lors de la suppression de l'employé", "error");
                 }
-                
-                // Supprimer l'employé
-                employees = employees.filter(emp => emp.id !== id);
-                
-                // Mettre à jour l'affichage
-                displayEmployees();
-                
-                // Mettre à jour les filtres d'absences
-                loadEmployeesForAbsences();
-                
-                // Recalculer les statistiques
-                applyFilters();
-                
-                // Afficher un message de confirmation
-                showAlert(employeeAlert, "Employé supprimé avec succès !", "success");
             }
         };
         
         // Fonction pour supprimer une absence
-        window.deleteAbsence = function(id) {
+        window.deleteAbsence = async function(id) {
             if (confirm("Êtes-vous sûr de vouloir supprimer cette absence ?")) {
-                // Supprimer l'absence
-                absences = absences.filter(abs => abs.id !== id);
-                
-                // Mettre à jour l'affichage
-                applyFilters();
-                
-                // Afficher un message de confirmation
-                showAlert(absenceAlert, "Absence supprimée avec succès !", "success");
+                try {
+                    // Supprimer l'absence
+                    await db.deleteAbsence(id);
+                    
+                    // Recharger les données
+                    await loadDataFromDatabase();
+                    
+                    // Mettre à jour l'affichage
+                    applyFilters();
+                    
+                    // Afficher un message de confirmation
+                    showAlert(absenceAlert, "Absence supprimée avec succès !", "success");
+                } catch (error) {
+                    console.error('Erreur lors de la suppression de l\'absence:', error);
+                    showAlert(absenceAlert, "Erreur lors de la suppression de l'absence", "error");
+                }
             }
         };
         
         // Fonction pour sauvegarder un employé
-        function saveEmployee() {
+        async function saveEmployee() {
             // Récupérer les données du formulaire
-            const id = parseInt(document.getElementById('employeeId').value);
+            const id = parseInt(document.getElementById('employeeId').value) || null;
             const matricule = document.getElementById('employeeMatricule').value.trim();
             const civilite = document.getElementById('employeeCivilite').value;
             const nom = document.getElementById('employeeNom').value.trim();
@@ -2720,19 +3265,18 @@
                 return;
             }
             
-            // Vérifier si le matricule existe déjà (sauf en mode édition pour le même employé)
-            const existingEmployee = employees.find(emp => emp.matricule === matricule && emp.id !== id);
-            if (existingEmployee) {
-                showAlert(employeeAlert, "Ce matricule est déjà utilisé par un autre employé", "error");
-                return;
-            }
-            
-            if (isEditingEmployee) {
-                // Mettre à jour l'employé existant
-                const index = employees.findIndex(emp => emp.id === id);
-                if (index !== -1) {
-                    employees[index] = {
-                        ...employees[index],
+            try {
+                // Vérifier si le matricule existe déjà (sauf en mode édition pour le même employé)
+                const existingEmployee = await db.getEmployeeByMatricule(matricule);
+                if (existingEmployee && (!isEditingEmployee || existingEmployee.id !== id)) {
+                    showAlert(employeeAlert, "Ce matricule est déjà utilisé par un autre employé", "error");
+                    return;
+                }
+                
+                if (isEditingEmployee && id) {
+                    // Mettre à jour l'employé existant
+                    const updatedEmployee = {
+                        id: id,
                         matricule,
                         civilite,
                         nom,
@@ -2747,47 +3291,54 @@
                         photo: photo || null
                     };
                     
+                    await db.updateEmployee(updatedEmployee);
                     showAlert(employeeAlert, "Employé modifié avec succès !", "success");
+                } else {
+                    // Ajouter un nouvel employé
+                    const newEmployee = {
+                        matricule,
+                        civilite,
+                        nom,
+                        prenom,
+                        department,
+                        position,
+                        hireDate,
+                        status,
+                        email: email || null,
+                        phone: phone || null,
+                        adresse: adresse || null,
+                        photo: photo || null
+                    };
+                    
+                    await db.addEmployee(newEmployee);
+                    showAlert(employeeAlert, "Employé ajouté avec succès !", "success");
                 }
-            } else {
-                // Ajouter un nouvel employé
-                const newId = employees.length > 0 ? Math.max(...employees.map(emp => emp.id)) + 1 : 1;
-                employees.push({
-                    id: newId,
-                    matricule,
-                    civilite,
-                    nom,
-                    prenom,
-                    department,
-                    position,
-                    hireDate,
-                    status,
-                    email: email || null,
-                    phone: phone || null,
-                    adresse: adresse || null,
-                    photo: photo || null
-                });
                 
-                showAlert(employeeAlert, "Employé ajouté avec succès !", "success");
+                // Recharger les données
+                await loadDataFromDatabase();
+                
+                // Mettre à jour l'affichage
+                displayEmployees();
+                
+                // Mettre à jour les filtres d'absences
+                loadEmployeesForAbsences();
+                
+                // Fermer le modal après un délai
+                setTimeout(() => {
+                    employeeModal.style.display = 'none';
+                    resetEmployeeForm();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Erreur lors de la sauvegarde de l\'employé:', error);
+                showAlert(employeeAlert, "Erreur lors de la sauvegarde de l'employé: " + error.message, "error");
             }
-            
-            // Mettre à jour l'affichage
-            displayEmployees();
-            
-            // Mettre à jour les filtres d'absences
-            loadEmployeesForAbsences();
-            
-            // Fermer le modal après un délai
-            setTimeout(() => {
-                employeeModal.style.display = 'none';
-                resetEmployeeForm();
-            }, 1500);
         }
         
         // Fonction pour sauvegarder une absence
-        function saveAbsence() {
+        async function saveAbsence() {
             // Récupérer les données du formulaire
-            const id = parseInt(document.getElementById('absenceId').value);
+            const id = parseInt(document.getElementById('absenceId').value) || null;
             const employeeId = parseInt(document.getElementById('absenceEmployee').value);
             const startDate = document.getElementById('absenceStartDate').value;
             const endDate = document.getElementById('absenceEndDate').value;
@@ -2813,12 +3364,11 @@
             const diffTime = Math.abs(end - start);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 pour inclure le premier jour
             
-            if (isEditingAbsence) {
-                // Mettre à jour l'absence existante
-                const index = absences.findIndex(abs => abs.id === id);
-                if (index !== -1) {
-                    absences[index] = {
-                        ...absences[index],
+            try {
+                if (isEditingAbsence && id) {
+                    // Mettre à jour l'absence existante
+                    const updatedAbsence = {
+                        id: id,
                         employeeId,
                         startDate,
                         endDate,
@@ -2828,33 +3378,40 @@
                         notes: notes || ''
                     };
                     
+                    await db.updateAbsence(updatedAbsence);
                     showAlert(absenceAlert, "Absence modifiée avec succès !", "success");
+                } else {
+                    // Ajouter une nouvelle absence
+                    const newAbsence = {
+                        employeeId,
+                        startDate,
+                        endDate,
+                        duration: diffDays,
+                        type,
+                        status,
+                        notes: notes || ''
+                    };
+                    
+                    await db.addAbsence(newAbsence);
+                    showAlert(absenceAlert, "Absence ajoutée avec succès !", "success");
                 }
-            } else {
-                // Ajouter une nouvelle absence
-                const newId = absences.length > 0 ? Math.max(...absences.map(abs => abs.id)) + 1 : 1;
-                absences.push({
-                    id: newId,
-                    employeeId,
-                    startDate,
-                    endDate,
-                    duration: diffDays,
-                    type,
-                    status,
-                    notes: notes || ''
-                });
                 
-                showAlert(absenceAlert, "Absence ajoutée avec succès !", "success");
+                // Recharger les données
+                await loadDataFromDatabase();
+                
+                // Mettre à jour l'affichage
+                applyFilters();
+                
+                // Fermer le modal après un délai
+                setTimeout(() => {
+                    absenceModal.style.display = 'none';
+                    resetAbsenceForm();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Erreur lors de la sauvegarde de l\'absence:', error);
+                showAlert(absenceAlert, "Erreur lors de la sauvegarde de l'absence: " + error.message, "error");
             }
-            
-            // Mettre à jour l'affichage
-            applyFilters();
-            
-            // Fermer le modal après un délai
-            setTimeout(() => {
-                absenceModal.style.display = 'none';
-                resetAbsenceForm();
-            }, 1500);
         }
         
         // Fonction pour réinitialiser le formulaire d'employé
@@ -2888,144 +3445,200 @@
         }
         
         // Fonction pour exporter les employés en Excel
-        function exportEmployeesToExcel() {
-            // Préparer les données pour l'exportation
-            const dataForExport = [];
-            
-            // En-têtes
-            dataForExport.push(["Matricule", "Civilité", "Nom", "Prénom", "Nom Complet", "Département", "Poste", "Date d'Embauche", "Statut", "Email", "Téléphone", "Adresse"]);
-            
-            // Ajouter les données des employés
-            employees.forEach(employee => {
-                // Formater la date d'embauche
-                const hireDate = new Date(employee.hireDate).toLocaleDateString('fr-FR');
+        async function exportEmployeesToExcel() {
+            try {
+                const employees = await db.getAllEmployees();
+                const departments = await db.getAllDepartments();
                 
-                // Nom du département
-                const dept = departments.find(d => d.id === employee.department);
-                const deptName = dept ? dept.name : employee.department;
+                if (employees.length === 0) {
+                    alert("Aucun employé à exporter.");
+                    return;
+                }
                 
-                dataForExport.push([
-                    employee.matricule,
-                    employee.civilite,
-                    employee.nom,
-                    employee.prenom,
-                    getFullName(employee),
-                    deptName,
-                    employee.position,
-                    hireDate,
-                    employee.status,
-                    employee.email || '',
-                    employee.phone || '',
-                    employee.adresse || ''
-                ]);
-            });
-            
-            // Créer un classeur
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(dataForExport);
-            
-            // Ajouter la feuille au classeur
-            XLSX.utils.book_append_sheet(wb, ws, "Employés");
-            
-            // Générer le fichier Excel
-            const fileName = `employes_le_phare_de_cap_bon_${new Date().toISOString().slice(0,10)}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-            
-            // Afficher une confirmation
-            alert(`Fichier Excel "${fileName}" téléchargé avec succès!`);
+                // Préparer les données pour l'exportation
+                const dataForExport = [];
+                
+                // En-têtes
+                dataForExport.push(["Matricule", "Civilité", "Nom", "Prénom", "Nom Complet", "Département", "Poste", "Date d'Embauche", "Statut", "Email", "Téléphone", "Adresse"]);
+                
+                // Ajouter les données des employés
+                employees.forEach(employee => {
+                    // Formater la date d'embauche
+                    const hireDate = new Date(employee.hireDate).toLocaleDateString('fr-FR');
+                    
+                    // Nom du département
+                    const dept = departments.find(d => d.id === employee.department);
+                    const deptName = dept ? dept.name : employee.department;
+                    
+                    dataForExport.push([
+                        employee.matricule,
+                        employee.civilite,
+                        employee.nom,
+                        employee.prenom,
+                        getFullName(employee),
+                        deptName,
+                        employee.position,
+                        hireDate,
+                        employee.status,
+                        employee.email || '',
+                        employee.phone || '',
+                        employee.adresse || ''
+                    ]);
+                });
+                
+                // Créer un classeur
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(dataForExport);
+                
+                // Ajouter la feuille au classeur
+                XLSX.utils.book_append_sheet(wb, ws, "Employés");
+                
+                // Générer le fichier Excel
+                const fileName = `employes_le_phare_de_cap_bon_${new Date().toISOString().slice(0,10)}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+                
+                // Afficher une confirmation
+                alert(`Fichier Excel "${fileName}" téléchargé avec succès!`);
+            } catch (error) {
+                console.error('Erreur lors de l\'exportation des employés:', error);
+                alert("Erreur lors de l'exportation des employés");
+            }
         }
         
         // Fonction pour exporter les absences en Excel
-        function exportAbsencesToExcel() {
-            // Préparer les données pour l'exportation
-            const dataForExport = [];
-            
-            // En-têtes
-            dataForExport.push(["Matricule", "Employé", "Département", "Date de début", "Date de fin", "Durée (jours)", "Type", "Statut", "Notes"]);
-            
-            // Obtenir les données filtrées
-            const selectedDept = departmentFilter.value;
-            const selectedMonth = monthFilter.value;
-            const selectedYear = yearFilter.value;
-            const selectedStatus = statusFilter.value;
-            
-            // Filtrer les données pour l'export
-            const exportData = absences.filter(item => {
-                // Obtenir l'employé correspondant
-                const employee = employees.find(emp => emp.id === item.employeeId);
-                if (!employee) return false;
+        async function exportAbsencesToExcel() {
+            try {
+                const absences = await db.getAllAbsences();
+                const employees = await db.getAllEmployees();
+                const departments = await db.getAllDepartments();
                 
-                // Filtrer par année
-                const itemYear = new Date(item.startDate).getFullYear().toString();
-                if (selectedYear !== "all" && itemYear !== selectedYear) return false;
-                
-                // Filtrer par mois
-                if (selectedMonth !== "all") {
-                    const itemMonth = new Date(item.startDate).getMonth() + 1;
-                    if (itemMonth.toString() !== selectedMonth) return false;
+                if (absences.length === 0) {
+                    alert("Aucune absence à exporter.");
+                    return;
                 }
                 
-                // Filtrer par département
-                if (selectedDept !== "all" && employee.department !== selectedDept) return false;
+                // Préparer les données pour l'exportation
+                const dataForExport = [];
                 
-                // Filtrer par statut
-                if (selectedStatus !== "all" && item.status !== selectedStatus) return false;
+                // En-têtes
+                dataForExport.push(["Matricule", "Employé", "Département", "Date de début", "Date de fin", "Durée (jours)", "Type", "Statut", "Notes"]);
                 
-                return true;
-            });
-            
-            // Ajouter les données filtrées
-            exportData.forEach(item => {
-                const employee = employees.find(emp => emp.id === item.employeeId);
-                if (!employee) return;
+                // Obtenir les données filtrées
+                const selectedDept = departmentFilter.value;
+                const selectedMonth = monthFilter.value;
+                const selectedYear = yearFilter.value;
+                const selectedStatus = statusFilter.value;
                 
-                const startDate = new Date(item.startDate).toLocaleDateString('fr-FR');
-                const endDate = new Date(item.endDate).toLocaleDateString('fr-FR');
+                // Filtrer les données pour l'export
+                const exportData = absences.filter(item => {
+                    // Obtenir l'employé correspondant
+                    const employee = employees.find(emp => emp.id === item.employeeId);
+                    if (!employee) return false;
+                    
+                    // Filtrer par année
+                    const itemYear = new Date(item.startDate).getFullYear().toString();
+                    if (selectedYear !== "all" && itemYear !== selectedYear) return false;
+                    
+                    // Filtrer par mois
+                    if (selectedMonth !== "all") {
+                        const itemMonth = new Date(item.startDate).getMonth() + 1;
+                        if (itemMonth.toString() !== selectedMonth) return false;
+                    }
+                    
+                    // Filtrer par département
+                    if (selectedDept !== "all" && employee.department !== selectedDept) return false;
+                    
+                    // Filtrer par statut
+                    if (selectedStatus !== "all" && item.status !== selectedStatus) return false;
+                    
+                    return true;
+                });
                 
-                // Nom du département
-                const dept = departments.find(d => d.id === employee.department);
-                const deptName = dept ? dept.name : employee.department;
-                
-                let statusText = '';
-                if (item.status === 'justified') {
-                    statusText = 'Justifiée';
-                } else if (item.status === 'unjustified') {
-                    statusText = 'Non justifiée';
-                } else {
-                    statusText = 'En attente';
+                if (exportData.length === 0) {
+                    alert("Aucune absence correspondant aux filtres sélectionnés.");
+                    return;
                 }
                 
-                dataForExport.push([
-                    employee.matricule,
-                    getFullName(employee),
-                    deptName,
-                    startDate,
-                    endDate,
-                    item.duration,
-                    item.type,
-                    statusText,
-                    item.notes || ''
-                ]);
-            });
-            
-            // Créer un classeur
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(dataForExport);
-            
-            // Ajouter la feuille au classeur
-            XLSX.utils.book_append_sheet(wb, ws, "Absences");
-            
-            // Générer le fichier Excel
-            const fileName = `absences_le_phare_de_cap_bon_${new Date().toISOString().slice(0,10)}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-            
-            // Afficher une confirmation
-            alert(`Fichier Excel "${fileName}" téléchargé avec succès!`);
+                // Ajouter les données filtrées
+                exportData.forEach(item => {
+                    const employee = employees.find(emp => emp.id === item.employeeId);
+                    if (!employee) return;
+                    
+                    const startDate = new Date(item.startDate).toLocaleDateString('fr-FR');
+                    const endDate = new Date(item.endDate).toLocaleDateString('fr-FR');
+                    
+                    // Nom du département
+                    const dept = departments.find(d => d.id === employee.department);
+                    const deptName = dept ? dept.name : employee.department;
+                    
+                    let statusText = '';
+                    if (item.status === 'justified') {
+                        statusText = 'Justifiée';
+                    } else if (item.status === 'unjustified') {
+                        statusText = 'Non justifiée';
+                    } else {
+                        statusText = 'En attente';
+                    }
+                    
+                    dataForExport.push([
+                        employee.matricule,
+                        getFullName(employee),
+                        deptName,
+                        startDate,
+                        endDate,
+                        item.duration,
+                        item.type,
+                        statusText,
+                        item.notes || ''
+                    ]);
+                });
+                
+                // Créer un classeur
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(dataForExport);
+                
+                // Ajouter la feuille au classeur
+                XLSX.utils.book_append_sheet(wb, ws, "Absences");
+                
+                // Générer le fichier Excel
+                const fileName = `absences_le_phare_de_cap_bon_${new Date().toISOString().slice(0,10)}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+                
+                // Afficher une confirmation
+                alert(`Fichier Excel "${fileName}" téléchargé avec succès!`);
+            } catch (error) {
+                console.error('Erreur lors de l\'exportation des absences:', error);
+                alert("Erreur lors de l'exportation des absences");
+            }
         }
         
         // Initialiser au chargement de la page
         document.addEventListener('DOMContentLoaded', function() {
-            // Rien à faire ici car la page de connexion s'affiche par défaut
+            // Vérifier si l'utilisateur est déjà connecté (session)
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (isLoggedIn === 'true') {
+                loginContainer.style.display = 'none';
+                dashboardContainer.style.display = 'block';
+                
+                // Initialiser la base de données
+                db.init()
+                    .then(() => loadDataFromDatabase())
+                    .then(() => initializeDashboard())
+                    .catch(error => {
+                        console.error('Erreur lors de l\'initialisation:', error);
+                        showAlert(employeeAlert, "Erreur lors du chargement des données. Veuillez rafraîchir la page.", "error");
+                    });
+            }
+            
+            // Sauvegarder l'état de connexion
+            loginForm.addEventListener('submit', function() {
+                localStorage.setItem('isLoggedIn', 'true');
+            });
+            
+            // Déconnexion
+            logoutBtn.addEventListener('click', function() {
+                localStorage.removeItem('isLoggedIn');
+            });
         });
     </script>
 </body>
