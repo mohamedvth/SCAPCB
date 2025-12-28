@@ -1,0 +1,8 @@
+
+{
+  "name": "Le Phare de Cap Bon - Absence Management System",
+  "description": "A comprehensive enterprise-grade absence management system featuring a real-time dashboard, employee tracking, and AI-powered data insights using Gemini.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
